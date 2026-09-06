@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "task_id": "illustrative-astra-advisor-task",
+  "task_id": "illustrative-codex-orchestrator-task",
   "illustrative": true,
   "coverage": {
     "scope": "whole_task",

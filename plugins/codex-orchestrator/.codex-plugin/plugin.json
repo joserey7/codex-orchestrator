@@ -1,0 +1,35 @@
+{
+  "name": "codex-orchestrator",
+  "version": "0.3.0",
+  "description": "Cheapest-capable native Codex orchestration with Astra architecture and acceptance, in economy or balanced mode.",
+  "author": {
+    "name": "codex-orchestrator contributors",
+    "url": "https://github.com/joserey7/codex-orchestrator"
+  },
+  "homepage": "https://github.com/joserey7/codex-orchestrator#readme",
+  "repository": "https://github.com/joserey7/codex-orchestrator",
+  "license": "MIT",
+  "keywords": [
+    "codex",
+    "orchestration",
+    "multi-agent",
+    "gpt-6-astra"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "codex-orchestrator",
+    "shortDescription": "Astra leads; cheaper capable models execute bounded work.",
+    "longDescription": "codex-orchestrator preserves upstream native delegation and evidence safeguards. GPT-6 Astra owns architecture, integration, verification, and final acceptance. Economy and balanced modes select Luna at its maximum supported effort, Terra High for engineering judgment, and Sol High for difficult work, with risk-based fresh review. Live controls are required; external engineering skills are optional.",
+    "developerName": "codex-orchestrator contributors",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/joserey7/codex-orchestrator",
+    "defaultPrompt": [
+      "Use $codex-orchestrator:orchestration in balanced mode to plan, build, verify, and review this work.",
+      "Use $codex-orchestrator:orchestration in economy mode with bounded cheapest-capable delegation."
+    ]
+  }
+}
