@@ -1,8 +1,9 @@
-# Astra Advisor operations
+# codex-orchestrator operations
 
 This reference holds the operational details behind the short orchestration skill.
-It describes capability selection and evidence rules; it does not define installed
-roles, role files, task lanes, or an installer.
+It preserves the upstream native delegation, evidence, and accounting lifecycle.
+Read the [routing policy](routing-policy.md) for modes, capability lanes, bounded
+contracts, and risk-based review. There are no installed role files or companion installer.
 
 ## Parent session
 
@@ -18,8 +19,9 @@ After capability preflight and before the first implementation or delegation tas
 call, record the selected plan:
 
 ~~~text
-ASTRA ROUTE
+CODEX ORCHESTRATOR ROUTE
 parent: <observed model or unobservable> / <observed effort or unobservable>
+mode: <economy or balanced; balanced by default>
 delegation: <none or each selected model and effort>
 risk: <concise, task-specific rationale>
 ~~~
@@ -54,12 +56,15 @@ must be selected afresh for the actual task:
 }
 ~~~
 
-The example does not prescribe a model, effort, task name, or number of subagents.
+The example illustrates request syntax. Select capability using the routing policy;
+Luna must request its live-supported maximum effort, and mode concurrency limits apply.
 Use the current tool schema for any additional required fields and reject a request
 whose selected controls cannot be enforced.
 
-Do not rely on role names, predefined TOMLs, a role-to-model table, or a fixed count
-cap. Dispatch only work whose files, interfaces, and acceptance evidence are clear;
+Do not rely on role names or predefined TOMLs that can override explicit controls.
+Respect the economy cap of 2 or balanced cap of 3 active delegates and any lower host
+limit. Count reviewers and descendants; capacity alone never justifies dispatch.
+Dispatch only work whose files, interfaces, and acceptance evidence are clear;
 keep useful planning, implementation, integration, or verification work in the
 parent session while independent subagents run. Avoid assigning the same change or
 check to both parent and subagent. Preserve concurrent edits and return each
@@ -85,22 +90,32 @@ the limitation; never silently substitute another model, effort, or tool.
 The public spawn and thread metadata are authoritative for model and effort. Use
 runtime introspection only to resolve a field that public metadata omitted, and report
 the source of each value. Chosen values are not the same as runtime-confirmed values.
+Before dispatch, confirm explicit model, effort, and clean-context controls in the
+public schema; check the selected model and supported effort, including Luna's maximum.
+After dispatch, inspect realized settings and their evidence source. Stop affected
+work on mismatch and withhold acceptance until the discrepancy is resolved and the
+result reverified. Unobservable realized settings must remain unconfirmed; if the
+task requires proof of the realized route, fail that guarantee closed. Do not
+reinterpret an accepted spawn request as runtime confirmation.
 
-For substantial implementation, the parent first inspects the complete accumulated
-diff and reruns the requested checks. It then starts a fresh read-only reviewer in a
-new context. The reviewer can be `gpt-5.6-sol`, `gpt-5.6-terra`, or `gpt-5.6-luna`,
-with an effort supported by live metadata, and must receive the exact change set,
+Before acceptance, the parent first inspects the complete accumulated
+diff and runs appropriate requested checks. Trivial work may omit fresh review when
+that verification is sufficient. Otherwise use a new read-only reviewer context:
+low risk Luna / Max, normal risk Terra / High, high risk Sol / High, and an explicit
+Astra decision for exceptional risk. The reviewer must receive the exact change set,
 interfaces, constraints, and verification evidence. Ask it to return:
 
 ~~~text
-ASTRA REVIEW
+CODEX ORCHESTRATOR REVIEW
 VERDICT: ship | fix-first | rethink
 REASON: <evidence-based reason>
 FINDINGS: <precise findings or none>
 RESIDUAL RISK: <remaining risk or none>
 ~~~
 
-Treat `ship` as the only accepting verdict for substantial implementation. On
+When fresh review is required, `ship` is the only accepting review verdict.
+Astra always retains final acceptance authority; inability to run a required review
+must be reported as incomplete verification. On
 `fix-first`, the parent makes the correction, reruns verification, and obtains a new
 fresh review. On `rethink`, revise the plan before claiming completion. The reviewer
 must not edit files or implement its own fixes. Capture actual sandbox and permission
@@ -135,12 +150,13 @@ Emit these updates in the user's conversation, not only in an internal log. They
 apply to each implementer and each fresh reviewer, including failed dispatches:
 
 ~~~text
-ASTRA DELEGATE <name>
+CODEX ORCHESTRATOR DELEGATE <name>
 task: <bounded deliverable and owned files>
 requested: <model> / <effort>
-reason: <why this work warrants this selection>
+mode: <economy or balanced>
+reason: <why delegation helps and this is the cheapest capable selection>
 
-ASTRA RESULT <name> / <agent ID or unavailable>
+CODEX ORCHESTRATOR RESULT <name> / <agent ID or unavailable>
 status: <completed, failed, interrupted, or blocked; actual evidence>
 requested: <model> / <effort>
 observed: <model or unobservable> / <effort or unobservable>
@@ -197,8 +213,8 @@ zero cost. Keep any illustrative fixture result visibly separate from live usage
 
 ## Calculator input and execution
 
-Run `python3 cost_receipt.py INPUT.json [--pricing PATH]` using the installed
-calculator path above. It emits a JSON receipt; exit 0 includes calculated, partial,
+Run `python cost_receipt.py INPUT.json [--pricing PATH]` using the installed
+calculator path above (Python 3.11+; use your platform's Python launcher). It emits a JSON receipt; exit 0 includes calculated, partial,
 and unavailable outcomes, while invalid input or pricing exits 2. Inspect the
 receipt status instead of treating exit 0 as proof of complete usage.
 

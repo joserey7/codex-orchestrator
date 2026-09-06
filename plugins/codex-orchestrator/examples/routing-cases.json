@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "illustrative": true,
+  "cases": [
+    {
+      "name": "economy permits bounded work below its cap",
+      "input": {
+        "task_class": "bounded",
+        "mode": "economy",
+        "useful": true,
+        "independent": true,
+        "active_delegates": 1,
+        "controls_available": true,
+        "capabilities": {"gpt-5.6-luna": ["low", "max"]}
+      },
+      "expected": {
+        "decision": "delegate",
+        "model": "gpt-5.6-luna",
+        "effort": "max",
+        "max_concurrent_delegates": 2
+      }
+    },
+    {
+      "name": "economy holds work at its cap",
+      "input": {
+        "task_class": "bounded",
+        "mode": "economy",
+        "useful": true,
+        "independent": true,
+        "active_delegates": 2,
+        "controls_available": true,
+        "capabilities": {"gpt-5.6-luna": ["max"]}
+      },
+      "expected": {"decision": "parent", "max_concurrent_delegates": 2}
+    },
+    {
+      "name": "balanced permits work with two active delegates",
+      "input": {
+        "task_class": "bounded",
+        "mode": "balanced",
+        "useful": true,
+        "independent": true,
+        "active_delegates": 2,
+        "controls_available": true,
+        "capabilities": {"gpt-5.6-luna": ["max"]}
+      },
+      "expected": {"decision": "delegate", "max_concurrent_delegates": 3}
+    },
+    {
+      "name": "Luna selects the future ultra effort when explicitly supported",
+      "input": {
+        "task_class": "mechanical",
+        "useful": true,
+        "independent": true,
+        "controls_available": true,
+        "capabilities": {"gpt-5.6-luna": ["max", "ultra"]}
+      },
+      "expected": {"decision": "delegate", "effort": "ultra"}
+    },
+    {
+      "name": "missing selected model blocks without fallback",
+      "input": {
+        "task_class": "difficult",
+        "useful": true,
+        "independent": true,
+        "controls_available": true,
+        "capabilities": {"gpt-5.6-terra": ["high"]}
+      },
+      "expected": {"decision": "blocked"}
+    },
+    {
+      "name": "empty selected effort list blocks",
+      "input": {
+        "task_class": "bounded",
+        "useful": true,
+        "independent": true,
+        "controls_available": true,
+        "capabilities": {"gpt-5.6-luna": []}
+      },
+      "expected": {"decision": "blocked"}
+    },
+    {
+      "name": "capabilities are not assumed by default",
+      "input": {"task_class": "bounded", "useful": true, "independent": true, "controls_available": true},
+      "expected": {"decision": "blocked"}
+    },
+    {
+      "name": "evidence escalates the reassessed difficult task directly to Sol",
+      "input": {
+        "task_class": "difficult",
+        "useful": true,
+        "independent": true,
+        "controls_available": true,
+        "escalation": true,
+        "evidence": "A new primary source changes the required approach.",
+        "capabilities": {"gpt-5.6-sol": ["high"]}
+      },
+      "expected": {"decision": "delegate", "model": "gpt-5.6-sol", "effort": "high"}
+    }
+  ]
+}

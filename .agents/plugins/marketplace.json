@@ -1,14 +1,14 @@
 {
-  "name": "astra-advisor",
+  "name": "codex-orchestrator",
   "interface": {
-    "displayName": "Astra Advisor"
+    "displayName": "codex-orchestrator"
   },
   "plugins": [
     {
-      "name": "astra-advisor",
+      "name": "codex-orchestrator",
       "source": {
         "source": "local",
-        "path": "./plugins/astra-advisor"
+        "path": "./plugins/codex-orchestrator"
       },
       "policy": {
         "installation": "AVAILABLE",
