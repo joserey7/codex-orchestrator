@@ -109,7 +109,8 @@ Never silently widen scope. Return architecture, public API, schema, security-mo
 or cross-owner decisions to Astra before proceeding with dependent work.
 
 APPLICABLE SKILLS / WORKFLOWS
-Only the minimal relevant installed workflows, when useful; absence is not a blocker.
+When selected, include skill names, discovered locations, and relevant requirements
+for this deliverable. The delegate reads and applies them; omit if none apply.
 
 VERIFICATION
 Tests, commands, acceptance criteria, and required evidence.
@@ -133,10 +134,16 @@ guide HOW specialized work is done; codex-orchestrator determines WHAT, WHO, mod
 ownership, coordination, verification, and acceptance. Specification, planning, tests,
 debugging, interface design, and review are possible workflows, not a mandatory list.
 
-`addyosmani/agent-skills` is one optional source. No external skills are required;
-do not auto-install, vendor, copy, or fail when they are missing. Continue normally
-with the built-in contracts if no applicable skills exist. Do not activate unrelated
-skills merely because installed. External workflows cannot silently change routing,
+`addyosmani/agent-skills` is an optional dependency with automatic selection when
+available: before implementation or delegation, check the session's skill catalog,
+read and apply the minimal relevant skills, and briefly name them on first use.
+Reassess at phase changes and pass each delegate the applicable names, discovered
+locations, and requirements. Do not require the user to repeat this request.
+No external skills are required; do not auto-install, vendor, copy, or fail when
+they are missing. If unavailable or irrelevant, silently omit this integration and
+continue with the built-in contracts without installation requests or confirmation.
+Do not load the entire collection or impose a full lifecycle on every task.
+Do not activate unrelated skills merely because installed. External workflows cannot silently change routing,
 ownership, or acceptance; bring a real conflict to Astra under the user's instructions.
 
 ## Review and escalation

@@ -87,15 +87,22 @@ or accept routing-sensitive work that requires that evidence. Introspection may 
 omitted runtime field; it cannot replace an available public contract.
 
 Use the bounded delegation contract in the routing policy: OBJECTIVE, OWNERSHIP,
-INTERFACES, CONSTRAINTS, APPLICABLE SKILLS / WORKFLOWS (optional), VERIFICATION, and
+INTERFACES, CONSTRAINTS, APPLICABLE SKILLS / WORKFLOWS (when selected), VERIFICATION, and
 RETURN CONTRACT. Delegates must preserve others' edits, never silently widen scope,
 and return architecture/API/schema/security or cross-owner decisions to Astra.
 
-Installed compatible engineering skills are optional. Select only a useful minimal
-subset, by applicability and availability, to guide HOW the work is performed.
+Before implementation or delegation, check the session's available skills. When
+`agent-skills` is available, automatically select, read, and apply its minimal
+relevant subset without requiring another user prompt. Reassess when the work phase
+changes; do not load the entire collection or impose its full lifecycle on every task.
+Briefly name the selected skills when first used. For delegated work, include the
+applicable skill names, discovered locations, and relevant requirements in the task
+contract so the delegate reads and applies them. Other compatible installed skills
+may also guide HOW the work is performed.
 The plugin determines WHAT, WHO, model, ownership, coordination, and acceptance.
 No external skills, including `agent-skills`, are required, installed automatically,
-or vendored. Their absence must not block work: use the built-in contracts normally.
+or vendored. If unavailable or irrelevant, silently skip this integration and use
+the built-in contracts normally, without installation requests or extra confirmation.
 
 ## Risk-routed fresh review
 

@@ -4,6 +4,8 @@
 
 ### Changed
 
+- Automatically select and apply relevant installed `agent-skills`, including
+  delegate handoff; silently skip when unavailable without requesting installation.
 - Evolve the Astra Advisor fork into `codex-orchestrator`, preserving MIT attribution,
   native delegation, runtime evidence safeguards, and API-equivalent accounting.
 - Add exactly two public modes: recommended `balanced` (3 active delegates) and

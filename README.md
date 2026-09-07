@@ -141,6 +141,12 @@ The current tool schema remains authoritative for actual dispatch.
 
 ## Optional engineering workflows
 
+When `agent-skills` is available in the session, the orchestrator automatically
+selects, reads, and applies the minimal relevant skills before implementation or
+delegation, without an extra prompt. It names selected skills on first use,
+passes their locations and requirements to delegates, and reassesses at phase changes.
+If unavailable or irrelevant, this integration is silently skipped.
+
 Installed compatible skills may guide specification, planning, testing, debugging,
 interface design, or review. codex-orchestrator determines **what, who, model,
 ownership, coordination, and acceptance**; an applicable workflow guides **how**.
