@@ -116,8 +116,13 @@ RESIDUAL RISK: <remaining risk or none>
 When fresh review is required, `ship` is the only accepting review verdict.
 Astra always retains final acceptance authority; inability to run a required review
 must be reported as incomplete verification. On
-`fix-first`, the parent makes the correction, reruns verification, and obtains a new
-fresh review. On `rethink`, revise the plan before claiming completion. The reviewer
+`fix-first`, Astra classifies the findings and assigns the correction according to
+the [correction routing policy](routing-policy.md#correction-routing): current
+implementer for bounded fixes, another capable model for an evidenced capability
+gap, or Astra for architectural work or minimal fixes where handoff is inefficient.
+After the assigned owner corrects the change, Astra reruns verification and obtains
+a new fresh review. Repeated material findings require reassessment before another
+attempt. On `rethink`, revise the plan before claiming completion. The reviewer
 must not edit files or implement its own fixes. Capture actual sandbox and permission
 metadata when the host exposes them; do not claim enforced read-only isolation unless
 it was observed.
@@ -170,8 +175,14 @@ No API keys, external inference CLIs, billing-account queries, or dashboard are 
 
 ## API-equivalent receipt policy
 
-Every task completion requires a visible receipt, including a task with no delegation
-or no accessible token telemetry. The calculator is Python standard library only:
+Receipts are conditional: show one at completion only when verified token usage is
+available for a clearly identified scope or the user explicitly requests a receipt.
+Without either condition, silently omit accounting output and skip the calculator.
+Do not search for telemetry, query account usage, or request setup solely to produce
+a receipt. Retain usage already exposed by native tools; partial data must retain
+its observed scope. An explicit request without observed usage gets a concise
+unavailable explanation, not a fabricated estimate. The calculator remains available
+as an optional tool and uses Python standard library only:
 [calculator](../../../scripts/cost_receipt.py),
 [pricing snapshot](../../../pricing/2026-09-04.json).
 Resolve these paths relative to this installed reference, not a guessed cache version.
@@ -207,8 +218,9 @@ limits: This is not a measured all-Astra counterfactual, actual net task savings
         or a change in ChatGPT subscription charges or usage credits.
 ~~~
 
-When no subagents ran, state `no delegation savings`. When no usage is exposed,
-state `unavailable: native tools did not expose observed token usage`; never show
+In an emitted receipt, when no subagents ran, state `no delegation savings`.
+When a receipt was requested but no usage is exposed, state
+`unavailable: native tools did not expose observed token usage`; never show
 zero cost. Keep any illustrative fixture result visibly separate from live usage.
 
 ## Calculator input and execution

@@ -117,7 +117,11 @@ Otherwise fresh review is selected by risk: **low -> Luna / Max; normal -> Terra
 High; high -> Sol / High**. Exceptional risks such as authorization, destructive
 migrations, data integrity, or concurrency require an explicit Astra decision about
 stronger or additional scrutiny. A reviewer stays read-only and returns `ship`,
-`fix-first`, or `rethink`. Fixes require verification and fresh review; Astra always
+`fix-first`, or `rethink`. After `fix-first`, Astra assigns bounded corrections to
+the current implementer, selects another capable model when findings demonstrate a
+capability gap, or corrects directly for architectural work or minimal fixes where
+handoff would cost more. Repeated findings trigger reassessment before another attempt.
+Fixes require verification and fresh review; Astra always
 retains final acceptance authority.
 
 Live public tool schemas outrank static capability snapshots. Delegation requires
@@ -161,6 +165,12 @@ reason, runtime-observed settings or their absence, reviewer, meaningful escalat
 and verification/acceptance outcome.
 
 The preserved calculator prices observed token usage against a versioned historical
+snapshot. A receipt is shown only when verified token usage is available for an
+identified scope or you request it. Otherwise accounting output is silently omitted,
+without telemetry searches or setup requests. An explicit request without data gets
+an unavailable explanation. The calculator remains available for optional use.
+
+When data is available, the receipt uses the historical pricing
 snapshot and compares the same tokens repriced at Astra. Coverage is explicitly
 whole-task, delegated-only, partial, or unavailable. Missing parent/reviewer usage
 prevents a whole-task claim. Unknown usage is not zero; no delegates means no

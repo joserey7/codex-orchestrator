@@ -174,6 +174,35 @@ classification. Failure alone is not a model-selection rationale. Record the new
 evidence, revised boundary, and why the newly selected capability is sufficient.
 Preserve useful code and evidence; avoid blind restarts and autonomous retry loops.
 
+### Correction routing
+
+On `fix-first`, Astra inspects the findings and their cause before assigning edits.
+The verdict requires correction, not an automatic model upgrade or parent takeover.
+
+- Keep a bounded correction with the current implementer when it remains capable;
+  reuse its context when available and useful. If the task contract was incomplete
+  or incorrect, repair that contract before another attempt.
+- Select another sufficient model when findings expose a capability gap, following
+  the cheapest-capable selection and live-control rules. State the new evidence
+  and why the selected model can handle the correction; do not require a failed
+  retry before escalation or step through every model in order.
+- Astra resolves architectural decisions and may implement the resulting correction
+  directly. Astra may also apply a minimal fix when handing it off would cost more
+  than executing it. A `rethink` verdict still requires replanning first.
+
+Give the correction owner precise findings, scope, preserved interfaces, and
+verification criteria. Preserve useful existing work and keep one writer per scope.
+Report the selected owner/model and reason briefly; delegated corrections use the
+normal delegation contract and lifecycle updates. The reviewer must not implement
+its own findings, even if it uses the same model as the correction owner.
+
+If the same material finding persists after correction, reassess its cause, the
+contract, and required capability before another attempt. Record what will change;
+do not repeat an unchanged attempt or use failure count alone to choose a model.
+If no viable correction is available, report the blocker without claiming completion.
+Every correction invalidates the prior review verdict. Regardless of who edits,
+Astra re-verifies the updated change and obtains a new fresh review before acceptance.
+
 ## Compact observability
 
 Report active mode, deliverable/ownership, why delegation helps, requested model and

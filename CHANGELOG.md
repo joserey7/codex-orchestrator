@@ -4,6 +4,10 @@
 
 ### Changed
 
+- Show API-equivalent receipts only with observed token usage or on explicit request;
+  silently skip unavailable accounting by default while preserving the calculator.
+- Route `fix-first` corrections by finding and capability instead of automatically
+  assigning them to Astra; reassess repeated findings and preserve fresh review.
 - Automatically select and apply relevant installed `agent-skills`, including
   delegate handoff; silently skip when unavailable without requesting installation.
 - Evolve the Astra Advisor fork into `codex-orchestrator`, preserving MIT attribution,

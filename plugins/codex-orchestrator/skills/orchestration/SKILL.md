@@ -124,8 +124,13 @@ RESIDUAL RISK: <remaining risk or none>
 ~~~
 
 When independent review is required, accept only after the fresh reviewer returns `ship`.
-After `fix-first`, the parent applies the correction, verifies again, and obtains a
-new fresh review. A reviewer remains read-only and never fixes its own findings.
+After `fix-first`, Astra classifies the findings and assigns the correction using
+the [correction routing policy](references/routing-policy.md#correction-routing):
+retain the current implementer for bounded fixes, select another capable model when
+new evidence shows the current capability is insufficient, or correct directly for
+architectural work or a minimal fix whose handoff would cost more than execution.
+Astra then verifies again and obtains a new fresh review. A reviewer remains
+read-only and never fixes its own findings.
 
 Use native Codex subagents in the ChatGPT app when the exposed interface supports the
 needed controls. Separate app tasks require an explicit user request. For an explicit
@@ -147,10 +152,14 @@ model/effort with their evidence source; if unavailable say `unobservable`. If t
 differ from the request, show both. A submitted request is not runtime confirmation.
 Keep progress readable; report meaningful changes without polling narration.
 
-At the completion of **every task**, even solo, failed, or blocked tasks, emit an
-`API-EQUIVALENT COST RECEIPT` using the calculator described in the operations
-reference, or a precise unavailable status when usage cannot be observed. Capture
-available usage with source, unique call IDs, agent identity, and scope as work runs.
+At task completion, emit an `API-EQUIVALENT COST RECEIPT` only when verified token
+usage is available for a clearly identified scope or the user requests the receipt.
+If neither condition holds, silently omit accounting output and skip the calculator;
+do not search for telemetry or request setup solely to produce a receipt. If the
+user requests it without observable usage, explain that it is unavailable.
+Use the calculator described in the operations reference when data is available.
+Capture usage already exposed by native tools with its source, unique call IDs,
+agent identity, and scope as work runs.
 Include parent, implementers, and all reviewers before claiming whole-task coverage.
 Do not invent token counts, missing rates, or success percentages. Unknown is not zero.
 
