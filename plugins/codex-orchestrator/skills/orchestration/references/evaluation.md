@@ -1,41 +1,31 @@
 # Optional evaluation and host compatibility
 
-This is development guidance, not normal orchestration context. Do not run telemetry/accounting work merely to complete a user task.
+Development guidance, not normal orchestration context. Do not start telemetry/accounting work merely to complete a task.
 
 ## What to evaluate
 
-The project optimizes **correctly accepted work per available subscription capacity**, not delegate count or API-dollar estimates. Raw token counts and API repricing are not direct ChatGPT Pro/Codex quota measurements.
+Optimize correctly accepted work per available subscription capacity, not delegate count or API-dollar estimates. Raw token counts/API repricing are not direct ChatGPT Pro/Codex quota measurements.
 
-When the host already exposes trustworthy telemetry, record separately:
-
-- client/version, OS and plan,
-- exact starting repository/worktree state and prompt,
-- configuration: root-only, economy, balanced (and explicit experiments),
-- requested and observed model/effort when available,
-- uncached input, cached input, output/reasoning tokens when explicitly recorded,
-- rate-limit percentages when explicitly recorded, noting they are account-wide,
-- dispatch/review/correction counts, wall time, verification and acceptance result.
-
-Never infer missing counters from text length, treat unknown as zero, or claim a percentage saving from a single run.
+When trustworthy telemetry is already available, record client/version, OS/plan, starting repository state, prompt, mode, logical roles, classifications, risk, requested/observed model/effort, token categories, account-wide rate-limit observations, dispatch/review/correction counts, duration and acceptance outcome. Unknown counters are not zero; do not infer them from text length or claim savings from one run.
 
 ## Benchmark protocol
 
-Use 3-4 representative tasks: localized fix, multi-file feature, cross-component bug, research-heavy change. Reuse prompts and starting state. Compare at least root-only Astra, economy and balanced; explicit Sol or other overrides are experiments, not default lanes. Repeat each cell multiple times because model/runtime variance is real.
+Reuse starting state and prompts for localized fixes, multi-file features, cross-component bugs and research-heavy changes. Compare root-only Astra, economy and balanced; repeat each cell. Sol Medium difficult-bounded work is part of balanced, not an override-only experiment. Compare combined Worker + Tester with separate validation only when independence adds value.
 
-Compare correctness/acceptance first, then subscription-window deltas when observable, then wall time and token categories. Other simultaneous Codex activity contaminates account-wide rate-limit deltas; disclose it.
+Compare correctness first, then observable subscription-window deltas and time/token categories. Concurrent account activity contaminates quota deltas. No model/effort superiority or savings is established by these offline routing rules alone.
 
 ## Release smoke check
 
-Offline tests cannot prove plugin installation or realized model pins. For a release, record the exact host/client version and test in a disposable project:
+In a disposable project, record the exact native host/client version:
 
-1. install the checkout and start a fresh Astra task,
-2. confirm economy routes mechanical -> Luna Medium and bounded -> Luna maximum individual,
-3. confirm balanced routes bounded -> Luna maximum individual and justified judgment -> Terra High,
-4. confirm difficult work stays with Astra unless a fresh Astra handoff is explicitly justified,
-5. confirm Sol is not selected without a user override,
-6. confirm capacity/dependency waits do not become parent execution,
-7. confirm exceptional risk requires an Astra decision and current fresh review,
-8. confirm missing controls/mismatched observed settings fail closed without substitution,
-9. confirm `task_state.py` catches stale review/current-revision and ownership/capacity mistakes.
+1. Install the checkout and start a fresh Astra task; preserve the selected parent effort.
+2. Check Economy mechanical Luna Medium and bounded Luna maximum-individual; verify Terra High/Sol Medium execution requires a reasoned exception.
+3. Check Balanced Luna maximum-individual, Terra High judgment and Sol Medium difficult-bounded routing directly, not after forced failures.
+4. Check unbounded decisions remain with Astra; an extra Astra specialist requires an explicit handoff reason.
+5. Exercise optional Explorer/Researcher, combined Worker + Tester and separate Tester packets. Roles must not force a model or unnecessary agents.
+6. In BOTH modes check normal fresh review Terra High, high Sol High, exceptional fresh Astra Low after parent risk approval, and low Luna maximum-individual.
+7. Confirm Tester evidence -> Astra integration/verification -> fresh review -> Astra acceptance; a correction triggers new verification and a NEW reviewer context.
+8. Confirm waits never become parent takeover, missing controls block without substitution, and realized-setting mismatches stop affected work.
+9. Check declared-state detection of stale review, missing pre-review parent evidence, execution-context reuse, overlapping writers, capacity and budget violations.
 
-Publish smoke results separately from CI. A green CI run proves offline contracts only.
+Record actual smoke evidence separately from CI. A green CI run establishes offline contracts, not native model pins, independent live review or subscription savings.

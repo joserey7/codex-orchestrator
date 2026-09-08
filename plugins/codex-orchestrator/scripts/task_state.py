@@ -3,14 +3,22 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 from pathlib import Path
 from typing import Any
 
-MODES = {"economy": 2, "balanced": 3}
+# Load our sibling explicitly so direct execution and isolated file imports work.
+_SPEC = importlib.util.spec_from_file_location("orchestrator_policy", Path(__file__).with_name("routing_policy.py"))
+assert _SPEC and _SPEC.loader
+policy = importlib.util.module_from_spec(_SPEC)
+_SPEC.loader.exec_module(policy)
+MODES = policy.MODES
 STATUSES = {"waiting", "active", "completed", "failed", "interrupted", "blocked", "skipped"}
-KINDS = {"implementation", "discovery", "correction", "review"}
-RISKS = {"trivial", "low", "normal", "high", "exceptional"}
+DEFAULT_ROLES = {"implementation": "worker", "correction": "worker", "discovery": "explorer",
+                 "research": "researcher", "validation": "tester", "review": "reviewer"}
+KINDS = set(DEFAULT_ROLES)
+RISKS = set(policy.RISKS)
 
 
 def _text(value: Any) -> bool:
@@ -28,9 +36,7 @@ def _scope(value: Any) -> str | None:
     parts = value.split("/")
     if not value or any(p in ("", ".", "..") for p in parts) or any(c in value for c in ":*?[]"):
         return None
-    # Conservative across Windows/macOS/Linux. Scopes are files or directory trees,
-    # not glob patterns; two writers to different sections still share a file.
-    return value.casefold()
+    return value.casefold()  # Conservative across Windows/macOS/Linux; scopes are not globs.
 
 
 def _overlap(left: str, right: str) -> bool:
@@ -38,10 +44,11 @@ def _overlap(left: str, right: str) -> bool:
 
 
 def validate_state(raw: Any, *, acceptance: bool = False) -> list[str]:
-    """Return all actionable errors. Values and sources are supplied assertions.
+    """Validate assertions, not runtime truth. Revisions must include dirty changes.
 
-    Revisions must identify the complete working diff, not merely HEAD when dirty.
-    Budget limits are reassessment gates, never permission to ship incomplete work.
+    A review captures parent_verified_revision/parent_verification_evidence BEFORE
+    dispatch. These assertions do not independently prove wall-clock ordering.
+    Optional roles retain compatibility with old kind-based execution records.
     """
     errors: list[str] = []
     if not isinstance(raw, dict):
@@ -65,7 +72,7 @@ def validate_state(raw: Any, *, acceptance: bool = False) -> list[str]:
     for field in ("agent_id", "requested_model", "requested_effort"):
         if not _text(parent.get(field)):
             errors.append(f"parent.{field} is required")
-    if parent.get("requested_model") != "gpt-6-astra":
+    if parent.get("requested_model") != policy.ASTRA:
         errors.append("Astra must be the selected parent")
     _settings_errors(parent, "parent", errors)
     work = raw["work"]
@@ -85,6 +92,17 @@ def validate_state(raw: Any, *, acceptance: bool = False) -> list[str]:
             errors.append(f"{ident}: invalid status")
         if not isinstance(kind, str) or kind not in KINDS:
             errors.append(f"{ident}: invalid kind")
+            kind = "invalid"
+        roles = w.get("roles", [DEFAULT_ROLES.get(kind)])
+        if not policy.valid_roles(roles, review=kind == "review"):
+            errors.append(f"{ident}: invalid roles; reviewer cannot be combined with execution")
+        else:
+            if DEFAULT_ROLES.get(kind) not in roles:
+                errors.append(f"{ident}: kind must agree with logical roles")
+            if any(r in roles for r in ("explorer", "researcher")) and w.get("read_only") is not True:
+                errors.append(f"{ident}: explorer/researcher contracts must be read-only")
+            if "worker" in roles and w.get("read_only") is not False:
+                errors.append(f"{ident}: a worker needs declared write ownership")
         if type(w.get("required")) is not bool or type(w.get("read_only")) is not bool:
             errors.append(f"{ident}: required/read_only must be booleans")
         if status == "completed" and not _text(w.get("evidence")):
@@ -94,7 +112,7 @@ def validate_state(raw: Any, *, acceptance: bool = False) -> list[str]:
             errors.append(f"{ident}: ownership needs relative file/directory scopes, without globs")
             scopes[ident] = []
         else:
-            scopes[ident] = [_scope(s) for s in owned]  # type: ignore[misc]
+            scopes[ident] = [_scope(s) for s in owned]
         deps = w.get("depends_on")
         if not isinstance(deps, list) or not all(_text(d) for d in deps):
             errors.append(f"{ident}: depends_on must be an array of IDs")
@@ -111,6 +129,17 @@ def validate_state(raw: Any, *, acceptance: bool = False) -> list[str]:
                 errors.append(f"{ident}: reviewer must be read-only in a fresh context")
             if status == "completed" and w.get("verdict") not in ("ship", "fix-first", "rethink"):
                 errors.append(f"{ident}: invalid review verdict")
+            if started:
+                if (not _text(w.get("reviewed_revision"))
+                        or w.get("parent_verified_revision") != w.get("reviewed_revision")
+                        or not _text(w.get("parent_verification_evidence"))):
+                    errors.append(f"{ident}: review needs same-revision parent verification evidence captured before dispatch")
+            if status == "active":
+                if (w.get("reviewed_revision") != raw["revision"]
+                        or parent.get("verified_revision") != raw["revision"]
+                        or parent.get("diff_inspected_revision") != raw["revision"]
+                        or not _text(parent.get("verification_evidence"))):
+                    errors.append(f"{ident}: active review requires Astra verification of the current candidate")
         if acceptance:
             if status == "active":
                 errors.append(f"{ident}: an agent is still active")
@@ -157,16 +186,19 @@ def validate_state(raw: Any, *, acceptance: bool = False) -> list[str]:
         for right in writers[i + 1:]:
             if any(_overlap(a, b) for a in scopes[left["id"]] for b in scopes[right["id"]]):
                 errors.append(f"overlapping writers: {left['id']} / {right['id']}")
+    for reviewer in (w for w in active if w.get("kind") == "review"):
+        if writers:
+            errors.append(f"{reviewer['id']}: do not review a candidate while execution writers are active")
     review_ids = [w.get("agent_id") for w in tasks.values()
                   if w.get("kind") == "review" and _text(w.get("agent_id"))]
     if len(set(review_ids)) != len(review_ids):
         errors.append("each fresh review needs a new agent context/ID")
-    implementers = {w.get("agent_id") for w in tasks.values()
-                    if w.get("read_only") is False and _text(w.get("agent_id"))}
+    executors = {w.get("agent_id") for w in tasks.values()
+                 if w.get("kind") != "review" and _text(w.get("agent_id"))}
     for w in tasks.values():
         if w.get("kind") == "review" and _text(w.get("agent_id")):
-            if w["agent_id"] in implementers or w["agent_id"] == parent.get("agent_id"):
-                errors.append(f"{w['id']}: reviewer cannot be parent or implementer/correction owner")
+            if w["agent_id"] in executors or w["agent_id"] == parent.get("agent_id"):
+                errors.append(f"{w['id']}: reviewer cannot reuse parent, implementer, tester or other execution context")
     if risk == "exceptional" and not _text(raw.get("astra_risk_decision")):
         errors.append("exceptional risk requires an explicit Astra decision")
     parent_corrections = raw.get("parent_corrections", 0)
@@ -190,16 +222,17 @@ def validate_state(raw: Any, *, acceptance: bool = False) -> list[str]:
         reviews = [w for w in tasks.values() if w.get("kind") == "review"
                    and w.get("reviewed_revision") == revision and w.get("status") == "completed"]
         for review in reviews:
-            model = review.get("requested_model")
-            allowed = {"gpt-6-astra"}
-            if risk in ("trivial", "low"):
-                allowed |= {"gpt-5.6-luna", "gpt-5.6-terra"}
-            elif risk == "normal" and mode == "balanced":
-                allowed.add("gpt-5.6-terra")
-            explicit_sol = (model == "gpt-5.6-sol" and review.get("override_authority") == "user"
-                            and _text(review.get("override_reason")))
-            if not isinstance(model, str) or (model not in allowed and not explicit_sol):
-                errors.append("review capability does not meet the mode/risk baseline")
+            review_risk = "low" if risk == "trivial" else risk
+            supported = review.get("supported_efforts")
+            if supported is not None and not _text(review.get("capabilities_source")):
+                errors.append("review supported efforts require a capabilities source")
+            if not policy.review_meets_baseline(review_risk, review.get("requested_model"),
+                                               review.get("requested_effort"), supported_efforts=supported):
+                errors.append("review capability/effort does not meet the mode-independent risk baseline")
+            elif review.get("requested_model") != policy.REVIEW_ROUTES[review_risk][0]:
+                if (review.get("override_authority") not in ("astra", "user")
+                        or not _text(review.get("override_reason"))):
+                    errors.append("stronger reviewer requires an explicit override reason and authority")
         if risk == "trivial":
             if not reviews and not _text(raw.get("review_omission_reason")):
                 errors.append("trivial review omission needs a reason")
