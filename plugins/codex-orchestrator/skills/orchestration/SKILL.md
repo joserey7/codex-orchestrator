@@ -1,174 +1,81 @@
 ---
 name: orchestration
-description: "Use codex-orchestrator for economy or balanced delivery: GPT-6 Astra owns architecture and acceptance, with cheapest-capable native Codex delegation."
+description: "Use codex-orchestrator for economy or balanced delivery: Astra owns decisions and acceptance; cheaper capable models execute bounded work."
 ---
 
 # codex-orchestrator
 
-Act as the architect and acceptance owner. Keep the primary session on GPT-6 Astra
-at the effort selected by the user. Astra owns intent, architecture, decomposition,
-delegation decisions, interfaces, integration, conflict resolution, parent verification,
-and final acceptance. Prefer thinking, decomposition, and decisions over mechanical
-execution. Delegate useful bounded discovery, edits, tests, and log inspection with
-concise returned evidence; inspect any evidence needed for acceptance. A skill cannot change the
-parent model or effort, and must honor the invocation's effort. If observable runtime
-metadata says the parent model is not `gpt-6-astra`, report the mismatch as a
-selection prerequisite and do not claim Astra orchestration. If the model or effort
-is unobservable, disclose that fact rather than inventing confirmation.
+GPT-6 Astra is the parent architect and acceptance owner. Preserve the parent model and effort selected by the user; the plugin never changes them. **Astra Low is the recommended starting point, not an enforced setting.** Astra owns intent, architecture, important ambiguity, decomposition, interfaces, integration, risk decisions, conflict resolution, verification and final acceptance.
 
-After capability preflight and before the first implementation or delegation task
-call, emit a short, machine-auditable declaration:
+Before first dispatch, read [routing policy](references/routing-policy.md). Read [operations](references/operations.md) only when live dispatch/review details are needed. Do not load optional accounting during normal work.
 
-~~~text
+Emit one compact plan before substantive work:
+
+```text
 CODEX ORCHESTRATOR ROUTE
-parent: <observed model or unobservable> / <observed effort or unobservable>
-mode: <economy or balanced; balanced by default>
-delegation: <none or the selected native subagent models and efforts>
-risk: <concise, task-specific rationale>
-~~~
+parent: <requested/observed model and effort; say unobservable when needed>
+mode: <economy|balanced>
+plan: <bounded deliverables and selected routes>
+risk: <task-specific risk and review plan>
+```
 
-Report model and effort as observed evidence. If metadata does not expose a value,
-say that it is unobservable; never claim a runtime pin that was not confirmed. Read
-[the routing policy](references/routing-policy.md) and
-[the operations reference](references/operations.md) before the first delegation.
+## Core model policy
 
-## Cheapest capable, before dispatch
+Classify before dispatch. Never build a Luna -> Terra -> Astra failure ladder.
 
-Use the cheapest model that is highly likely to complete the bounded task correctly
-in one attempt. Classify first: can Luna reliably do it? If not, can Terra? If not,
-can Sol? Otherwise retain the work with Astra or decompose it. Optimize useful tokens
-per correctly completed task, including retries and parent supervision.
-
-Exactly two public modes exist: `balanced` (recommended default, at most 3 active
-delegates) and `economy` (at most 2). These are limits, not targets; count reviewers
-and any descendants across the task. Capacity is not justification for delegation.
-Only parallelize genuinely independent work with clear ownership. Reject redundant
-investigation, competing implementations, and duplication of the parent's work.
-An exception above the mode limit requires Astra to state a concrete reason before
-dispatch and still honor the host limit. Delegates may not spawn further agents
-without returning to Astra for an explicit allocation.
-
-Economy aggressively bounds work for Luna and uses Terra only when meaningful
-engineering judgment warrants it; Sol is exceptional. Balanced uses Luna for
-mechanical/bounded work and selects Terra or Sol directly when that materially
-improves first-attempt success. Neither mode requires a cheaper model to fail first.
-
-| Capability needed | Model | Requested effort |
+| Work | Economy | Balanced |
 | --- | --- | --- |
-| Discovery, mechanical edits, explicit implementation, routine tests/debugging | `gpt-5.6-luna` | Maximum supported by live runtime (currently `max`) |
-| Meaningful engineering judgment, module design, moderate ambiguity/integration | `gpt-5.6-terra` | `high` by default |
-| Difficult cross-cutting work, high ambiguity, interacting constraints | `gpt-5.6-sol` | `high` by default; justify choosing it over Terra |
-| Architecture, important ambiguity, integration decisions, final acceptance | `gpt-6-astra` parent | User-selected |
+| Mechanical/read-only discovery, routine commands | Luna / Medium | Luna / maximum individual reasoning |
+| Explicit bounded implementation/debugging/refactor | Luna / maximum individual reasoning | Luna / maximum individual reasoning |
+| Meaningful local engineering judgment | Astra resolves/decomposes, then Luna if the result is truly bounded; exceptional Terra needs an explicit reason | Terra / High with a concrete reason Luna is insufficient |
+| Difficult/architectural/important ambiguity | Astra parent | Astra parent |
 
-Luna / Max always means the maximum effort supported by the active runtime: never
-choose a lower effort when a higher one is available. If the maximum cannot be
-established, fail that delegation closed. Terra/Sol may use a higher supported
-effort for a concrete reason. Escalate only on new information that changes the
-classification; preserve useful work and evidence. Do not build a deliberate failure
-ladder or automatic retry loop.
+`maximum individual reasoning` means the highest confirmed individual effort. Do **not** treat `ultra` as merely above Max: if Ultra also enables autonomous descendants, it requires a separate explicit user decision and is outside the default lanes. Delegates may not spawn descendants without Astra allocation.
 
-Use the generic `collaboration.spawn_agent` tool only when it is exposed by the
-current tool schema. Each selected subagent must receive an explicit `model`, an
-explicit supported `reasoning_effort`, and `fork_turns: none`. Choose dynamically
-among the capability lanes above using live metadata, without predefined role files
-that could override the request. Give every subagent a concrete, bounded, independent
-deliverable while Astra continues useful parent work. Do not duplicate the parent's
-implementation or verification in a subagent.
+Sol is not a default lane. Use it only on an explicit user override, with an explicit supported effort and reason. Do not silently substitute unavailable models/efforts. A difficult independent deliverable may use a fresh Astra / Low delegate when Astra explicitly decides the separate context or parallelism is worth the handoff; otherwise keep it in the parent.
 
-Tools and their public schemas are authoritative. Select only an effort the current
-tool exposes. If a selected model, effort, spawn control, or required native tool is
-missing, conflicting, unavailable, or unobservable, fail that delegation closed and
-continue only with safe parent work or report the limitation. Never silently
-substitute a model, effort, role, or fabricated tool. After dispatch, inspect realized
-settings when available. On a mismatch, stop affected work and withhold acceptance
-until the routing discrepancy is resolved and the result reverified. When realized
-settings are unobservable, label them unconfirmed; do not claim a routing guarantee
-or accept routing-sensitive work that requires that evidence. Introspection may clarify an
-omitted runtime field; it cannot replace an available public contract.
+Economy should try to remove ambiguity cheaply, but never spend more Astra supervision decomposing work than the handoff is likely to save. Balanced selects the cheapest model that naturally fits the deliverable. Optimize correctly accepted work, not delegation count.
 
-Use the bounded delegation contract in the routing policy: OBJECTIVE, OWNERSHIP,
-INTERFACES, CONSTRAINTS, APPLICABLE SKILLS / WORKFLOWS (when selected), VERIFICATION, and
-RETURN CONTRACT. Delegates must preserve others' edits, never silently widen scope,
-and return architecture/API/schema/security or cross-owner decisions to Astra.
+## Coordination states
 
-Before implementation or delegation, check the session's available skills. When
-`agent-skills` is available, automatically select, read, and apply its minimal
-relevant subset without requiring another user prompt. Reassess when the work phase
-changes; do not load the entire collection or impose its full lifecycle on every task.
-Briefly name the selected skills when first used. For delegated work, include the
-applicable skill names, discovered locations, and relevant requirements in the task
-contract so the delegate reads and applies them. Other compatible installed skills
-may also guide HOW the work is performed.
-The plugin determines WHAT, WHO, model, ownership, coordination, and acceptance.
-No external skills, including `agent-skills`, are required, installed automatically,
-or vendored. If unavailable or irrelevant, silently skip this integration and use
-the built-in contracts normally, without installation requests or extra confirmation.
+Treat these as distinct:
 
-## Risk-routed fresh review
+- `delegate`: dispatch to the selected model.
+- `parent`: Astra genuinely owns this work.
+- `wait`: work is delegable but blocked by capacity/dependencies/serialization. Never transfer it to Astra merely because slots are full.
+- `skip`: work is redundant or not useful. Do not perform it in the parent.
+- `blocked`: a required control/evidence/authorization is missing.
 
-Astra inspects the complete accumulated diff and runs appropriate requested checks.
-Trivial work may omit independent review when that verification is sufficient.
-Otherwise choose a fresh read-only reviewer by risk: low -> Luna / Max;
-normal -> Terra / High; high -> Sol / High. Exceptional risks (security boundaries,
-destructive migrations, integrity, concurrency, distributed consistency) require an
-explicit Astra decision about stronger or additional independent scrutiny. No
-automatic Astra reviewer is required. Fresh context and sufficient capability matter.
-Use explicit controls and give the reviewer the actual change set and evidence:
+Delegability and parallel safety are separate. A serial task can still be a later Luna task. Use at most 2 active delegates in economy and 3 in balanced, or a lower host limit. Limits include reviewers/descendants and are not targets. Use one writer per file/subsystem and avoid duplicate investigations or competing implementations.
 
-~~~text
-CODEX ORCHESTRATOR REVIEW
-VERDICT: ship | fix-first | rethink
-REASON: <evidence-based reason>
-FINDINGS: <precise findings or none>
-RESIDUAL RISK: <remaining risk or none>
-~~~
+For each meaningful handoff specify OBJECTIVE, OWNERSHIP, INTERFACES, CONSTRAINTS, optional applicable skills/workflows, VERIFICATION, and a concise RETURN CONTRACT. Delegates preserve others' edits, do not widen scope, and return architecture/API/schema/security/cross-owner decisions to Astra.
 
-When independent review is required, accept only after the fresh reviewer returns `ship`.
-After `fix-first`, Astra classifies the findings and assigns the correction using
-the [correction routing policy](references/routing-policy.md#correction-routing):
-retain the current implementer for bounded fixes, select another capable model when
-new evidence shows the current capability is insufficient, or correct directly for
-architectural work or a minimal fix whose handoff would cost more than execution.
-Astra then verifies again and obtains a new fresh review. A reviewer remains
-read-only and never fixes its own findings.
+Before implementation/delegation, use the minimal relevant installed engineering skills when available. They guide HOW; this plugin owns WHAT/WHO/model/coordination/acceptance. `agent-skills` remains optional and is never installed automatically.
 
-Use native Codex subagents in the ChatGPT app when the exposed interface supports the
-needed controls. Separate app tasks require an explicit user request. For an explicit
-Codex app task, `mcp__codex_app__create_thread` supports `model` and `thinking`; call
-`mcp__codex_app__list_projects` first for project targets, using a worktree by default
-for Git projects and local otherwise. ChatGPT Work cloud `create_thread` must omit
-`model` and `thinking`, so it cannot currently promise arbitrary model or effort
-control; do not dispatch a model-pinned request there by default or use an API-key/CLI
-workaround. Use a future native work tool only when its schema exposes the required
-controls.
+## Risk and review
 
-## Live delegation and completion receipts
+Implementation capability and consequence-of-error are separate. Exceptional risk (security boundaries, destructive migrations, critical integrity, concurrency/distributed consistency, irreversible architecture) requires an explicit Astra decision even when the edit itself is mechanical.
 
-Automatically show a short user-visible lifecycle update for **every** delegation,
-including reviews, before dispatch and on completion or failure. Before dispatch,
-include task name, exact bounded ownership, requested model and effort, and the
-reason for that selection. On return, include agent ID, actual status, and observed
-model/effort with their evidence source; if unavailable say `unobservable`. If they
-differ from the request, show both. A submitted request is not runtime confirmation.
-Keep progress readable; report meaningful changes without polling narration.
+Fresh review baseline:
 
-At task completion, emit an `API-EQUIVALENT COST RECEIPT` only when verified token
-usage is available for a clearly identified scope or the user requests the receipt.
-If neither condition holds, silently omit accounting output and skip the calculator;
-do not search for telemetry or request setup solely to produce a receipt. If the
-user requests it without observable usage, explain that it is unavailable.
-Use the calculator described in the operations reference when data is available.
-Capture usage already exposed by native tools with its source, unique call IDs,
-agent identity, and scope as work runs.
-Include parent, implementers, and all reviewers before claiming whole-task coverage.
-Do not invent token counts, missing rates, or success percentages. Unknown is not zero.
+| Risk | Economy | Balanced |
+| --- | --- | --- |
+| Trivial | May omit with a recorded reason | May omit with a recorded reason |
+| Low | Luna / maximum individual | Luna / maximum individual |
+| Normal | Astra / Low | Terra / High |
+| High | Astra / Low | Astra / Low |
+| Exceptional | Astra explicitly decides stronger/additional scrutiny | Astra explicitly decides stronger/additional scrutiny |
 
-Distinguish observed tokens from pricing estimates and partial coverage. Show routed
-USD and the same observed tokens repriced at Astra only when comparable; label the
-difference a **same-token API price comparison**, never measured all-Astra behavior,
-actual net task savings, subscription charges, or improved quality/speed. If parent
-usage is missing, label any available delegated-only comparison separately. With no
-subagents there are no delegation savings. Effort is metadata, not a price multiplier.
-Use the versioned snapshot and disclose its date and promotional Sol pricing. Reject
-unsupported pricing regimes rather than silently using standard rates. An illustrative
-fixture is optional and must remain separate from this task's receipt.
+Reviewers are fresh and read-only, inspect the complete accumulated diff, and return `ship`, `fix-first`, or `rethink`. They never fix their own findings. Any correction invalidates the prior verdict; Astra re-verifies and obtains a new fresh review when review is required. Repeated findings trigger reassessment, not automatic escalation. Sol review remains an explicit user override.
+
+## Evidence and acceptance
+
+Public native tool schemas and runtime metadata outrank static snapshots. Before dispatch require explicit model, effort and fresh-context controls and record their evidence source. Requested settings are not proof of realized settings. If observed values mismatch, stop affected work and reverify. If realized settings are unobservable, disclose that; only block acceptance when routing proof is explicitly required.
+
+Use `scripts/task_state.py` as a **declared-state consistency check** when the task is non-trivial or before a consequential acceptance. It validates dependencies, one-writer ownership, budgets, review freshness and revision matching; it does not intercept Codex or prove runtime truth.
+
+Set a small pre-dispatch budget for dispatches, correction cycles and reviews. Exceeding it is a reassessment gate: revise the plan explicitly or stop. A budget never permits accepting incomplete work.
+
+Astra accepts only after inspecting the complete accumulated diff/revision, running or confirming the highest-value checks, resolving required work and current review findings, and recording concise evidence. Do not redo every delegate investigation when returned evidence is sufficient.
+
+Read [operations](references/operations.md) for live lifecycle details and [evaluation](references/evaluation.md) for optional benchmarking. Cost/accounting is not part of normal orchestration.

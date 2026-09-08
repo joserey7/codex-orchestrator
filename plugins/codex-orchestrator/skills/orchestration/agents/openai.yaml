@@ -1,4 +1,4 @@
 interface:
   display_name: "codex-orchestrator"
-  short_description: "Astra leads cheapest-capable delegation"
+  short_description: "Astra decides; bounded work routes by mode"
   default_prompt: "Use $codex-orchestrator:orchestration in balanced mode to plan, build, verify, and review this work."

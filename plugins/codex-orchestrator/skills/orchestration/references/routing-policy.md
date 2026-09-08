@@ -1,213 +1,76 @@
-# codex-orchestrator routing policy
+# Routing policy
 
-## Authority and scope
+## Authority
 
-GPT-6 Astra is the architect, orchestrator, decomposition authority, integration
-owner, conflict resolver, verification owner, and final acceptance authority.
-Astra retains intent, important ambiguity, cross-cutting decisions, interfaces,
-acceptance criteria, risk assessment, skill selection, and inspection of evidence
-and important diffs. Delegates own bounded execution, never final acceptance.
+GPT-6 Astra owns architecture, important ambiguity, decomposition, interfaces, integration, risk decisions, verification and final acceptance. Delegates own bounded execution only. The supreme rule is: **select the cheapest model highly likely to complete the bounded task correctly on the first attempt**. Do not force cheaper-model failures first and do not delegate merely because capacity exists.
 
-The supreme rule is: **Use the cheapest model that is highly likely to complete the
-bounded task correctly in one attempt.** Assess capability before dispatch. Do not
-always choose the cheapest model, always choose the strongest model, or deliberately
-make cheaper models fail first. Optimize useful tokens per correctly completed task,
-including context transfer, retries, review, and Astra supervision.
+Astra Low is the recommended starting effort for the parent, but the user's selected parent effort is authoritative. The plugin never mutates it.
 
-This is an agent policy, not a custom scheduler or a guarantee of model performance.
-The small [offline helper](../../../scripts/routing_policy.py) checks a classification
-supplied by Astra against mode, capability, and independence constraints. It does not
-classify natural language, discover live capabilities, spawn agents, or confirm
-realized settings. Tests exercise these enforceable constraints and fixtures;
-first-attempt reliability remains a judgment to validate against actual outcomes.
+## Modes and model lanes
 
-## Two modes
-
-Select the mode from the user's instruction. If omitted, use `balanced`. An unknown
-mode is invalid: explain the two supported modes instead of silently accepting it.
-Mode choice applies to this task; it does not rewrite host configuration or switch
-the parent model. A mode change requires recounting active delegates before dispatch.
-If the new cap is below current activity, let useful existing work return and launch
-no additional delegates until below the cap.
-
-| Mode | Default maximum active delegates | Routing behavior |
+| Classification | Economy | Balanced |
 | --- | --- | --- |
-| `economy` | 2 | Strong Luna bias; first look for a useful decomposition that makes work explicitly bounded. Use Terra when meaningful judgment remains; reserve Sol for exceptional difficulty. |
-| `balanced` | 3 | Recommended general-purpose default: Luna for mechanical/bounded work, Terra directly for judgment, Sol directly for genuine difficulty when it materially improves likely first-attempt success. |
+| Mechanical | Luna / Medium | Luna / maximum individual |
+| Bounded | Luna / maximum individual | Luna / maximum individual |
+| Judgment | Astra resolves/decomposes; if genuinely bounded route Luna; Terra only by explicit exceptional authorization | Terra / High, with a concrete capability reason |
+| Difficult | Astra parent; fresh Astra / Low delegate only when separate context/parallelism justifies the handoff | Astra parent; same exception |
+| Architecture/acceptance | Astra parent | Astra parent |
 
-Both preserve the same capability floor and correctness requirements. Economy must
-not label judgment-heavy work mechanical to obtain a cheaper route. Balanced must
-not select Sol merely for convenience. For example, an established-pattern migration
-belongs on Luna in either mode. A module refactor with unresolved behavior tradeoffs
-belongs on Terra; Economy can first have Astra settle those tradeoffs and then give
-Luna an explicit transformation if the decomposition actually saves effort. Balanced
-can keep that bounded judgment with Terra. Do not spend more supervising decomposition
-than it is likely to save.
+Economy has at most 2 active delegates; balanced at most 3. A lower host limit wins. Capacity is not justification for delegation. `maximum individual` excludes Ultra when Ultra changes topology by enabling autonomous delegation. Do not grant descendants without Astra allocation.
 
-Limits are not targets. Capacity is not justification for delegation. Use the
-smallest number of delegates that materially improves delivery. Count implementers,
-researchers, reviewers, and descendants across the task; exclude the parent. A
-delegate cannot spawn descendants without Astra allocating ownership and capacity.
-Reused idle agents count only while active. Never exceed a host-enforced limit.
-An exceptional override above the mode default needs a concrete explicit reason
-announced by Astra before dispatch. The offline helper deliberately enforces defaults;
-an exception is a documented parent decision, not a hidden configuration surface.
+Sol is not a default lane. It is available only through an explicit **user** override containing model, supported effort and reason. This keeps it available for experiments without creating a permanent routing category. Explicit user model/effort requests override mode defaults when the host supports them, except they cannot transfer final architectural/acceptance authority away from Astra.
 
-## Classify before selecting
+Economy may exceptionally authorize Terra / High for bounded judgment when Astra explicitly records why decomposition would cost more than the handoff. This is an exception, not a hidden lane. A user may explicitly override Luna effort for an experiment; otherwise Luna uses the mode policy.
 
-1. Define a useful independent deliverable and its acceptance evidence. If none
-   exists, keep the work with Astra. Trivial tasks rarely justify coordination.
-2. Ask whether Luna / Max is highly likely to complete it correctly in one attempt.
-   If yes, select Luna. If no, identify the missing capability before considering Terra.
-3. Select Terra if it can handle the meaningful engineering judgment. It does not
-   need a failed Luna attempt. If Terra is insufficient, explain why.
-4. Select Sol only for a genuinely difficult bounded task. If Sol is also unlikely
-   to succeed, keep the decision/work with Astra or restructure the problem.
-5. Check live controls, maximum effort, independence, ownership, and available
-   capacity before dispatch. An unavailable route is blocked, not silently replaced.
+## Classification and state
 
-| Classification | Typical work | Model / default effort |
+1. Define a useful deliverable and acceptance evidence. Redundant/non-useful work is `skip`.
+2. Decide whether it can be bounded for delegation. If not, it is `parent` work.
+3. Decide readiness and dependencies. Not-ready work is `wait`.
+4. Classify capability before selecting a model. No failure ladder.
+5. Decide whether it is safe to run concurrently. A serial task can remain delegable and wait until prior work completes.
+6. Check mode/host capacity. Full capacity is `wait`, never an automatic parent takeover.
+7. Check live model/effort/fresh-context controls and their evidence source. Missing required controls is `blocked`.
+8. Dispatch only after ownership, interfaces, constraints and verification are explicit.
+
+The offline `scripts/routing_policy.py` checks caller-supplied classifications; it does not understand natural language, discover live capabilities, dispatch agents, or prove realized settings.
+
+## Delegation contract
+
+Each meaningful handoff states:
+
+- **OBJECTIVE**: one useful outcome.
+- **OWNERSHIP**: relative file/directory scopes or responsibility; one writer per overlapping scope.
+- **INTERFACES**: contracts to preserve/change.
+- **CONSTRAINTS**: behavior, compatibility, permissions, no unallocated descendants, no silent scope expansion.
+- **APPLICABLE SKILLS / WORKFLOWS**: minimal installed workflows when relevant; optional.
+- **VERIFICATION**: commands, tests, reproduction or evidence.
+- **RETURN CONTRACT**: concise changed files/findings, checks, assumptions, blockers and residual risks; avoid raw logs/full files.
+
+## Risk is separate from implementation difficulty
+
+A mechanical change can be high consequence. Record risk independently. Exceptional risk requires an explicit Astra decision before dispatch/acceptance. Fresh review baseline is:
+
+| Risk | Economy | Balanced |
 | --- | --- | --- |
-| Mechanical or explicitly bounded | Repository/symbol/reference discovery, mapping, code reading, established-pattern migrations, repetitive edits, boilerplate, fixtures, straightforward tests, lint/typecheck execution, explicit implementation, tightly bounded fixes, evidence-led routine debugging, explicit-rule refactors | `gpt-5.6-luna` / maximum live-supported effort |
-| Engineering judgment | Normal feature work, moderately ambiguous debugging, module design in existing architecture, mostly established API contracts, non-trivial refactors, moderate tradeoffs, bounded integration | `gpt-5.6-terra` / `high` |
-| Difficult | Cross-cutting implementation, highly ambiguous investigation, expert analysis, important-boundary refactors, concurrency/distributed reasoning, interacting constraints | `gpt-5.6-sol` / `high` |
-| Architecture or insufficiently bounded | Intent, important ambiguity, cross-cutting decisions, decomposition, integration decisions, final acceptance | Astra parent / user-selected effort |
+| Trivial | no independent review if parent verification is sufficient and omission is recorded | same |
+| Low | Luna / maximum individual | Luna / maximum individual |
+| Normal | Astra / Low | Terra / High |
+| High | Astra / Low | Astra / Low |
+| Exceptional | Astra decides stronger/additional scrutiny | same |
 
-These are capability lanes, not installed agent roles. Subject matter alone is not
-classification: an explicitly specified edit in a complex subsystem can be bounded,
-while a tiny change to an unclear security boundary can require expert judgment.
-Consequence of error also affects the capability needed and the separate review risk.
+A reviewer is a new read-only context, never the parent or an implementer/correction owner, and reviews the exact current accumulated diff/revision. Same-model fresh review provides context independence, not guaranteed error independence. A current `ship` verdict is evidence; Astra retains acceptance.
 
-Luna is always **Luna / Max**: select the maximum reasoning effort supported by the
-current Codex runtime for `gpt-5.6-luna`. Currently that is `max`; if a runtime exposes
-`ultra` as a higher supported effort, use it. If a runtime only exposes lower efforts,
-use its confirmed maximum and disclose the limitation instead of claiming literal
-`max`. Do not deliberately choose `low`, `medium`, or `high` when higher is available.
-If support or ordering cannot be established, fail closed. Terra and Sol default to
-`high`; select higher supported effort only with a concrete reason. No silent lower
-effort fallback is allowed when `high` cannot be requested.
+`fix-first` routes corrections by the new evidence: reuse a capable implementer for bounded corrections, choose a different sufficient capability only when findings show a gap, or let Astra resolve architectural/minimal corrections when handoff would cost more. Every edit invalidates the prior verdict and requires re-verification plus a fresh review when review is required. `rethink` means replan first. Repeated findings require cause/contract/capability reassessment, not an unchanged retry.
 
-## Bounded delegation contract
+## Coordination ledger and budgets
 
-Use these fields for each meaningful implementation; omit irrelevant detail for
-small read-only work while retaining outcome, ownership, and evidence:
+For non-trivial/consequential work, keep a compact declared task state (see `examples/task-state.json`) and optionally validate it with `scripts/task_state.py`. Track current accumulated revision, requested/observed settings and source, task IDs, dependencies, ownership, status, concise evidence, current review verdict and a pre-dispatch budget for dispatches/corrections/reviews.
 
-```text
-OBJECTIVE
-Exact outcome and why it helps this task.
+The validator is advisory consistency checking, not runtime enforcement. It cannot prove that a model ran, that a sandbox was read-only, or that a revision identifier covers dirty work; use authoritative native evidence. Unobservable realized settings remain unconfirmed. If routing proof is explicitly required, unobservability blocks that guarantee; otherwise disclose it without inventing confirmation.
 
-OWNERSHIP
-Files, directories, subsystem, or responsibility. You are not alone in the codebase;
-preserve others' edits and coordinate with Astra at ownership boundaries.
-
-INTERFACES
-Contracts to preserve and any interfaces explicitly allowed to change.
-
-CONSTRAINTS
-Architecture, behavior, compatibility, scope, permissions, and no unallocated spawning.
-Never silently widen scope. Return architecture, public API, schema, security-model,
-or cross-owner decisions to Astra before proceeding with dependent work.
-
-APPLICABLE SKILLS / WORKFLOWS
-When selected, include skill names, discovered locations, and relevant requirements
-for this deliverable. The delegate reads and applies them; omit if none apply.
-
-VERIFICATION
-Tests, commands, acceptance criteria, and required evidence.
-
-RETURN CONTRACT
-Files changed; concise summary; checks and results; assumptions; blockers; residual
-risks; architectural questions. Give precise evidence locations, not large raw logs.
-```
-
-Reject overlapping investigations of substantially the same question, duplicate
-parent/worker implementation, and competing implementations for comparison. Partition
-files and interfaces before parallel work; coordinate shared-file integration through
-Astra. Independent review is a deliberate confidence check after implementation,
-not redundant parallel implementation. Routine execution can be delegated, but Astra
-must inspect evidence and rerun appropriate checks for final verification.
+A budget overrun means reassess and explicitly revise the plan. It never permits incomplete acceptance. Required failed/interrupted work must be completed by an explicitly identified replacement or remain incomplete. Optional unfinished work needs a disposition.
 
 ## Optional workflows
 
-Use installed compatible skills generically by relevance and availability. They
-guide HOW specialized work is done; codex-orchestrator determines WHAT, WHO, model,
-ownership, coordination, verification, and acceptance. Specification, planning, tests,
-debugging, interface design, and review are possible workflows, not a mandatory list.
-
-`addyosmani/agent-skills` is an optional dependency with automatic selection when
-available: before implementation or delegation, check the session's skill catalog,
-read and apply the minimal relevant skills, and briefly name them on first use.
-Reassess at phase changes and pass each delegate the applicable names, discovered
-locations, and requirements. Do not require the user to repeat this request.
-No external skills are required; do not auto-install, vendor, copy, or fail when
-they are missing. If unavailable or irrelevant, silently omit this integration and
-continue with the built-in contracts without installation requests or confirmation.
-Do not load the entire collection or impose a full lifecycle on every task.
-Do not activate unrelated skills merely because installed. External workflows cannot silently change routing,
-ownership, or acceptance; bring a real conflict to Astra under the user's instructions.
-
-## Review and escalation
-
-| Risk | Fresh review baseline |
-| --- | --- |
-| Trivial | None if Astra verification is sufficient; record why |
-| Low | Luna / Max |
-| Normal | Terra / High |
-| High | Sol / High |
-| Exceptional | Astra explicitly decides on stronger or additional independent scrutiny |
-
-Security boundaries, authentication/authorization, destructive migrations, critical
-data integrity, concurrency, distributed consistency, and irreversible architecture
-can warrant exceptional review. Fresh context and sufficient capability matter more
-than automatically choosing the most expensive reviewer. Never require Astra as the
-fresh reviewer for every substantive change. The parent always makes final acceptance.
-
-Review the accumulated diff, not just the last delegate's patch, after Astra's
-verification. Use a new read-only context with the contract and evidence. Require
-`ship`, `fix-first`, or `rethink`. A required review that cannot run remains incomplete.
-After a fix, verify again and get fresh review of the updated change; a reviewer
-never fixes its own findings. A `ship` verdict is evidence, not a transfer of acceptance.
-
-Escalation after dispatch is justified only by NEW INFORMATION: unexpected coupling,
-ambiguity, concurrency behavior, undocumented constraints, or evidence contradicting
-classification. Failure alone is not a model-selection rationale. Record the new
-evidence, revised boundary, and why the newly selected capability is sufficient.
-Preserve useful code and evidence; avoid blind restarts and autonomous retry loops.
-
-### Correction routing
-
-On `fix-first`, Astra inspects the findings and their cause before assigning edits.
-The verdict requires correction, not an automatic model upgrade or parent takeover.
-
-- Keep a bounded correction with the current implementer when it remains capable;
-  reuse its context when available and useful. If the task contract was incomplete
-  or incorrect, repair that contract before another attempt.
-- Select another sufficient model when findings expose a capability gap, following
-  the cheapest-capable selection and live-control rules. State the new evidence
-  and why the selected model can handle the correction; do not require a failed
-  retry before escalation or step through every model in order.
-- Astra resolves architectural decisions and may implement the resulting correction
-  directly. Astra may also apply a minimal fix when handing it off would cost more
-  than executing it. A `rethink` verdict still requires replanning first.
-
-Give the correction owner precise findings, scope, preserved interfaces, and
-verification criteria. Preserve useful existing work and keep one writer per scope.
-Report the selected owner/model and reason briefly; delegated corrections use the
-normal delegation contract and lifecycle updates. The reviewer must not implement
-its own findings, even if it uses the same model as the correction owner.
-
-If the same material finding persists after correction, reassess its cause, the
-contract, and required capability before another attempt. Record what will change;
-do not repeat an unchanged attempt or use failure count alone to choose a model.
-If no viable correction is available, report the blocker without claiming completion.
-Every correction invalidates the prior review verdict. Regardless of who edits,
-Astra re-verifies the updated change and obtains a new fresh review before acceptance.
-
-## Compact observability
-
-Report active mode, deliverable/ownership, why delegation helps, requested model and
-effort with selection rationale, realized settings and source (or `unobservable`),
-reviewer selection or omission, meaningful escalation, verification, and Astra's
-acceptance decision. Use the [operations reference](operations.md) for runtime
-preflight, lifecycle updates, and truthful API-equivalent receipts. Missing usage
-means unavailable, not zero; estimates are not ChatGPT Pro / Codex quota consumption.
+Installed engineering skills such as `agent-skills` may guide HOW a deliverable is executed. Select only the minimal relevant subset, pass applicable requirements to delegates, and reassess at phase changes. They do not silently change routing, ownership or acceptance. No external skill is required or auto-installed.

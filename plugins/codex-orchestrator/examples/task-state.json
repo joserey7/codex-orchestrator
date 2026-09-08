@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "mode": "balanced",
+  "risk": "normal",
+  "revision": "worktree:<content-hash-or-equivalent>",
+  "parent": {
+    "agent_id": "parent",
+    "requested_model": "gpt-6-astra",
+    "requested_effort": "low",
+    "routing_proof_required": false,
+    "unconfirmed_disclosure": "realized settings are not exposed by this host",
+    "diff_inspected_revision": "worktree:<content-hash-or-equivalent>",
+    "verified_revision": "worktree:<content-hash-or-equivalent>",
+    "accepted_revision": "worktree:<content-hash-or-equivalent>",
+    "verification_evidence": "targeted tests and final diff inspection",
+    "acceptance_reason": "requirements and review gate satisfied"
+  },
+  "work": [
+    {
+      "id": "implementation",
+      "kind": "implementation",
+      "status": "completed",
+      "required": true,
+      "read_only": false,
+      "ownership": ["src/feature"],
+      "depends_on": [],
+      "agent_id": "worker-1",
+      "requested_model": "gpt-5.6-luna",
+      "requested_effort": "max",
+      "dispatch_source": "native spawn metadata",
+      "routing_proof_required": false,
+      "unconfirmed_disclosure": "realized settings are not exposed by this host",
+      "evidence": "tests passed; concise file list returned"
+    },
+    {
+      "id": "review",
+      "kind": "review",
+      "status": "completed",
+      "required": true,
+      "read_only": true,
+      "fresh_context": true,
+      "ownership": ["src/feature"],
+      "depends_on": ["implementation"],
+      "agent_id": "reviewer-1",
+      "requested_model": "gpt-5.6-terra",
+      "requested_effort": "high",
+      "dispatch_source": "native spawn metadata",
+      "routing_proof_required": false,
+      "unconfirmed_disclosure": "realized settings are not exposed by this host",
+      "reviewed_revision": "worktree:<content-hash-or-equivalent>",
+      "verdict": "ship",
+      "evidence": "reviewed complete accumulated diff"
+    }
+  ],
+  "budget": {"dispatches": 3, "corrections": 1, "reviews": 1},
+  "parent_corrections": 0
+}

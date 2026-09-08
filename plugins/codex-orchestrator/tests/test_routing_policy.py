@@ -2,175 +2,160 @@ from __future__ import annotations
 
 import importlib.util
 import json
-import subprocess
-import sys
 import unittest
 from pathlib import Path
 
-
 PLUGIN = Path(__file__).resolve().parents[1]
-SCRIPT = PLUGIN / "scripts" / "routing_policy.py"
-EXAMPLE = PLUGIN / "examples" / "routing-cases.json"
-SPEC = importlib.util.spec_from_file_location("routing_policy", SCRIPT)
+SPEC = importlib.util.spec_from_file_location("routing_policy", PLUGIN / "scripts" / "routing_policy.py")
 assert SPEC and SPEC.loader
-routing_policy = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(routing_policy)
-
-
-CAPABILITIES = {
-    "gpt-5.6-luna": ["low", "high", "max"],
-    "gpt-5.6-terra": ["high"],
-    "gpt-5.6-sol": ["high"],
-}
+policy = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(policy)
+CAPS = {policy.LUNA: ["medium", "high", "max", "ultra"],
+        policy.TERRA: ["high"], policy.ASTRA: ["low", "medium"], policy.SOL: ["medium", "high"]}
 
 
 class RoutingPolicyTests(unittest.TestCase):
-    def route(self, task_class: str, **overrides: object) -> dict:
-        options: dict[str, object] = {
-            "useful": True,
-            "independent": True,
-            "capabilities": CAPABILITIES,
-            "controls_available": True,
-        }
-        options.update(overrides)
-        return routing_policy.choose_route(task_class, **options)
+    def route(self, task="bounded", **kwargs):
+        options = dict(useful=True, independent=True, capabilities=CAPS,
+                       controls_available=True, controls_source="test native schema")
+        options.update(kwargs)
+        return policy.choose_route(task, **options)
 
-    def assert_delegate(self, result: dict, model: str, effort: str) -> None:
-        self.assertEqual(result["decision"], "delegate")
-        self.assertEqual(result["model"], model)
-        self.assertEqual(result["effort"], effort)
-        self.assertEqual(result["fork_turns"], "none")
+    def review(self, risk="normal", **kwargs):
+        options = dict(capabilities=CAPS, controls_available=True,
+                       controls_source="test native schema")
+        options.update(kwargs)
+        return policy.choose_review(risk, **options)
 
-    def test_mechanical_work_uses_luna_at_known_highest_effort_in_each_mode(self) -> None:
-        for mode, cap in (("economy", 2), ("balanced", 3)):
-            with self.subTest(mode=mode):
-                result = self.route("mechanical", mode=mode)
-                self.assert_delegate(result, "gpt-5.6-luna", "max")
-                self.assertEqual(result["mode"], mode)
-                self.assertEqual(result["max_concurrent_delegates"], cap)
+    def test_economy_matrix(self):
+        for task, decision, effort in [("mechanical", "delegate", "medium"),
+                                       ("bounded", "delegate", "max"),
+                                       ("judgment", "parent", None),
+                                       ("difficult", "parent", None),
+                                       ("architecture", "parent", None)]:
+            with self.subTest(task=task):
+                r = self.route(task, mode="economy")
+                self.assertEqual(r["decision"], decision)
+                self.assertEqual(r.get("effort"), effort)
 
-    def test_judgment_and_difficult_work_select_their_direct_models(self) -> None:
-        self.assert_delegate(self.route("judgment"), "gpt-5.6-terra", "high")
-        self.assert_delegate(self.route("difficult"), "gpt-5.6-sol", "high")
+    def test_balanced_matrix(self):
+        for task, model, effort in [("mechanical", policy.LUNA, "max"),
+                                   ("bounded", policy.LUNA, "max"),
+                                   ("judgment", policy.TERRA, "high")]:
+            r = self.route(task, rationale="requires module-level engineering judgment")
+            self.assertEqual((r["decision"], r["model"], r["effort"]), ("delegate", model, effort))
 
-    def test_architecture_stays_with_parent_without_needing_capabilities(self) -> None:
-        result = routing_policy.choose_route("architecture")
-        self.assertEqual(result["decision"], "parent")
-        self.assertNotIn("model", result)
+    def test_capacity_waits_instead_of_assigning_astra(self):
+        for mode, cap in policy.MODES.items():
+            for count in (cap, cap + 1):
+                self.assertEqual(self.route(mode=mode, active_delegates=count)["decision"], "wait")
+                self.assertEqual(self.review("high", mode=mode, active_delegates=count)["decision"], "wait")
 
-    def test_review_risk_maps_to_luna_terra_sol_or_parent(self) -> None:
-        self.assertEqual(routing_policy.choose_review("trivial")["decision"], "parent")
-        self.assert_delegate(
-            routing_policy.choose_review(
-                "low", capabilities=CAPABILITIES, controls_available=True
-            ),
-            "gpt-5.6-luna",
-            "max",
-        )
-        self.assert_delegate(
-            routing_policy.choose_review(
-                "normal", capabilities=CAPABILITIES, controls_available=True
-            ),
-            "gpt-5.6-terra",
-            "high",
-        )
-        self.assert_delegate(
-            routing_policy.choose_review(
-                "high", capabilities=CAPABILITIES, controls_available=True
-            ),
-            "gpt-5.6-sol",
-            "high",
-        )
-        self.assertEqual(routing_policy.choose_review("exceptional")["decision"], "parent")
+    def test_host_cap_and_mode_switch_drain(self):
+        self.assertEqual(self.route(host_limit=1, active_delegates=1)["decision"], "wait")
+        self.assertEqual(self.route(host_limit=0)["decision"], "wait")
+        self.assertEqual(self.route(mode="economy", active_delegates=3)["decision"], "wait")
 
-    def test_non_useful_redundant_or_full_capacity_work_stays_with_parent(self) -> None:
-        self.assertEqual(self.route("bounded", useful=False)["decision"], "parent")
-        self.assertEqual(self.route("bounded", independent=False)["decision"], "parent")
-        self.assertEqual(self.route("bounded", redundant=True)["decision"], "parent")
-        result = self.route("bounded", mode="economy", active_delegates=2)
-        self.assertEqual(result["decision"], "parent")
-        self.assertIn("capacity", result["reason"])
-        for mode, cap in (("economy", 2), ("balanced", 3)):
-            with self.subTest(mode=mode):
-                self.assertEqual(self.route("bounded", mode=mode, active_delegates=cap - 1)["decision"], "delegate")
-                self.assertEqual(self.route("bounded", mode=mode, active_delegates=cap)["decision"], "parent")
-                self.assertEqual(self.route("bounded", mode=mode, active_delegates=cap + 1)["decision"], "parent")
+    def test_serial_delegation_and_readiness_are_distinct(self):
+        self.assertEqual(self.route(independent=False)["decision"], "delegate")
+        self.assertEqual(self.route(independent=False, active_delegates=1)["decision"], "wait")
+        self.assertEqual(self.route(ready=False)["decision"], "wait")
+        self.assertEqual(self.route(delegable=False)["decision"], "parent")
 
-    def test_controls_and_supported_efforts_are_required_without_fallback(self) -> None:
-        self.assertEqual(self.route("mechanical", controls_available=False)["decision"], "blocked")
-        self.assertEqual(self.route("mechanical", capabilities=None)["decision"], "blocked")
-        self.assertEqual(
-            self.route(
-                "judgment",
-                capabilities={"gpt-5.6-terra": ["medium"]},
-            )["decision"],
-            "blocked",
-        )
-        self.assertEqual(
-            self.route(
-                "mechanical",
-                capabilities={"gpt-5.6-luna": ["max", "turbo"]},
-            )["decision"],
-            "blocked",
-        )
+    def test_skip_never_means_parent_execution(self):
+        self.assertEqual(self.route(useful=False)["decision"], "skip")
+        self.assertEqual(self.route(redundant=True)["decision"], "skip")
 
-    def test_luna_uses_the_highest_explicit_supported_effort(self) -> None:
-        result = self.route(
-            "bounded", capabilities={"gpt-5.6-luna": ["minimal", "xhigh"]}
-        )
-        self.assert_delegate(result, "gpt-5.6-luna", "xhigh")
+    def test_parent_effort_is_not_modified(self):
+        r = self.route("architecture")
+        self.assertEqual(r["decision"], "parent")
+        self.assertNotIn("effort", r)
+        self.assertIn("user-selected", r["parent_effort"])
 
-    def test_new_information_escalation_requires_evidence_for_the_reassessed_class(self) -> None:
-        self.assertEqual(self.route("difficult", escalation=True)["decision"], "blocked")
-        result = self.route(
-            "difficult",
-            escalation=True,
-            evidence="A new primary source changes the required approach.",
-        )
-        self.assert_delegate(result, "gpt-5.6-sol", "high")
+    def test_difficult_delegation_requires_rationale(self):
+        self.assertEqual(self.route("difficult", delegate_difficult=True)["decision"], "blocked")
+        r = self.route("difficult", delegate_difficult=True, rationale="independent deep investigation")
+        self.assertEqual((r["model"], r["effort"]), (policy.ASTRA, "low"))
 
-    def test_malformed_inputs_are_blocked_safely(self) -> None:
-        cases = [
-            ("mechanical", {"active_delegates": -1}),
-            ("mechanical", {"active_delegates": True}),
-            ("mechanical", {"mode": "fast"}),
-            ("unknown", {}),
-            ("mechanical", {"useful": "yes"}),
-            ("mechanical", {"capabilities": []}),
-            ("mechanical", {"controls_available": "yes"}),
-            ("mechanical", {"escalation": "yes"}),
-        ]
-        for task_class, options in cases:
-            with self.subTest(task_class=task_class, options=options):
-                result = self.route(task_class, **options)
-                self.assertEqual(result["decision"], "blocked")
-                self.assertIn("reason", result)
+    def test_terra_requires_reason_not_a_luna_failure(self):
+        self.assertEqual(self.route("judgment")["decision"], "blocked")
+        self.assertEqual(self.route("judgment", rationale="unresolved local tradeoff")["model"], policy.TERRA)
 
-    def test_routing_case_fixture_covers_expected_decisions(self) -> None:
-        fixture = json.loads(EXAMPLE.read_text(encoding="utf-8"))
-        self.assertEqual(fixture["schema_version"], 1)
-        for case in fixture["cases"]:
+    def test_exceptional_risk_cannot_silently_pass(self):
+        self.assertEqual(self.route("mechanical", risk="exceptional")["decision"], "blocked")
+        r = self.route("mechanical", risk="exceptional", astra_risk_decision="Astra approved exact edit and review plan")
+        self.assertEqual(r["model"], policy.LUNA)
+        self.assertTrue(r["review_required"])
+        self.assertTrue(r["astra_decision_required"])
+
+    def test_risk_review_matrix(self):
+        expected = {"economy": [("low", policy.LUNA), ("normal", policy.ASTRA), ("high", policy.ASTRA)],
+                    "balanced": [("low", policy.LUNA), ("normal", policy.TERRA), ("high", policy.ASTRA)]}
+        for mode, cases in expected.items():
+            self.assertEqual(self.review("trivial", mode=mode)["decision"], "skip")
+            for risk, model in cases:
+                r = self.review(risk, mode=mode)
+                self.assertEqual(r["model"], model)
+                self.assertTrue(r["read_only"])
+                self.assertTrue(r["fresh_context"])
+        self.assertEqual(self.review("exceptional")["decision"], "blocked")
+        self.assertEqual(self.review("exceptional", astra_risk_decision="additional scrutiny approved")["model"], policy.ASTRA)
+
+    def test_unavailable_route_does_not_fall_back(self):
+        for kwargs in [dict(controls_available=False), dict(controls_source=None), dict(capabilities={}),
+                       dict(capabilities={policy.LUNA: ["ultra"]}), dict(capabilities=[]),
+                       dict(capabilities={policy.LUNA: ["max", "turbo"]})]:
+            with self.subTest(kwargs=kwargs):
+                self.assertEqual(self.route(**kwargs)["decision"], "blocked")
+        self.assertEqual(self.route("mechanical", mode="economy", capabilities={policy.LUNA: ["max"]})["decision"], "blocked")
+
+    def test_max_individual_excludes_ultra(self):
+        r = self.route()
+        self.assertEqual(r["effort"], "max")
+        self.assertFalse(r["automatic_descendants"])
+        self.assertEqual(self.route(capabilities={policy.LUNA: ["high", "xhigh"]})["effort"], "xhigh")
+
+    def test_explicit_sol_override_only(self):
+        options = dict(override_model=policy.SOL, override_effort="medium", override_reason="user comparison")
+        self.assertEqual(self.route(**options, override_authority="astra")["decision"], "blocked")
+        self.assertEqual(self.route(**options, override_authority="user")["model"], policy.SOL)
+        self.assertEqual(self.route(override_model=policy.SOL)["decision"], "blocked")
+
+    def test_economy_terra_exception_and_user_effort_override(self):
+        r = self.route("judgment", mode="economy", override_model=policy.TERRA, override_effort="high",
+                       override_reason="decomposition would cost more than a bounded Terra handoff", override_authority="astra")
+        self.assertEqual(r["model"], policy.TERRA)
+        self.assertTrue(r["override"])
+        r = self.route(override_model=policy.LUNA, override_effort="medium",
+                       override_reason="explicit experiment", override_authority="user")
+        self.assertEqual(r["effort"], "medium")
+
+    def test_override_cannot_steal_architecture_or_enable_ultra(self):
+        opts = dict(override_model=policy.ASTRA, override_effort="low", override_reason="test", override_authority="user")
+        self.assertEqual(self.route("architecture", **opts)["decision"], "blocked")
+        opts["override_effort"] = "ultra"
+        self.assertEqual(self.route(**opts)["decision"], "blocked")
+
+    def test_escalation_evidence_required(self):
+        self.assertEqual(self.route(escalation=True)["decision"], "blocked")
+        self.assertEqual(self.route(escalation=True, evidence="previous scope was wrong")["decision"], "delegate")
+
+    def test_malformed_inputs(self):
+        for kwargs in [dict(mode=[]), dict(risk=[]), dict(active_delegates=True), dict(host_limit=-1),
+                       dict(useful="yes"), dict(ready=None), dict(rationale=" "), dict(evidence=1),
+                       dict(capabilities={policy.LUNA: [True]}), dict(override_model=[])]:
+            with self.subTest(kwargs=kwargs):
+                self.assertEqual(self.route(**kwargs)["decision"], "blocked")
+
+    def test_routing_fixtures(self):
+        data = json.loads((PLUGIN / "examples" / "routing-cases.json").read_text(encoding="utf-8"))
+        for case in data["cases"]:
             with self.subTest(case=case["name"]):
-                actual = routing_policy.choose_route(**case["input"])
-                for key, expected in case["expected"].items():
-                    self.assertEqual(actual.get(key), expected)
-
-    def test_helper_imports_under_isolated_standard_library_path(self) -> None:
-        program = (
-            "import importlib.util, sys; "
-            f"path = {str(SCRIPT)!r}; "
-            "spec = importlib.util.spec_from_file_location('routing_policy_isolated', path); "
-            "module = importlib.util.module_from_spec(spec); "
-            "spec.loader.exec_module(module); "
-            "assert not any('codex-orchestrator' in entry for entry in sys.path)"
-        )
-        completed = subprocess.run(
-            [sys.executable, "-I", "-c", program],
-            check=False,
-            capture_output=True,
-            text=True,
-        )
-        self.assertEqual(completed.returncode, 0, completed.stderr)
+                opts = dict(capabilities=CAPS, controls_available=True, controls_source="fixture", useful=True, independent=True)
+                opts.update(case["input"])
+                r = policy.choose_route(**opts)
+                for key, value in case["expected"].items():
+                    self.assertEqual(r.get(key), value)
 
 
 if __name__ == "__main__":
