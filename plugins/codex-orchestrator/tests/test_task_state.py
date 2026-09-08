@@ -29,7 +29,7 @@ def good_state(mode="balanced", risk="normal"):
         model = "gpt-5.6-terra" if mode == "balanced" and risk == "normal" else "gpt-6-astra"
         effort = "high" if model == "gpt-5.6-terra" else "low"
         work.append(dispatched("review", kind="review", model=model, effort=effort,
-                               reviewed_revision="worktree:abc", verdict="ship", ownership=["src"])))
+                               reviewed_revision="worktree:abc", verdict="ship", ownership=["src"]))
     return {"schema_version": 1, "mode": mode, "risk": risk, "revision": "worktree:abc",
             "parent": {"agent_id": "parent", "requested_model": "gpt-6-astra", "requested_effort": "low",
                        "routing_proof_required": False, "unconfirmed_disclosure": "runtime model/effort unobservable",
