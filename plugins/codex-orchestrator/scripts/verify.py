@@ -97,11 +97,12 @@ def validate_package(repo: Path) -> list[str]:
             resolved = (path.parent / unquote(parsed.path)).resolve()
             if not resolved.is_relative_to(root) or not resolved.is_file():
                 errors.append(f"broken/escaping Markdown link in {path.relative_to(repo)}: {target}")
-    skill = (package / "skills" / "orchestration" / "SKILL.md")
+    skill = package / "skills" / "orchestration" / "SKILL.md"
     if skill.is_file():
         text = skill.read_text(encoding="utf-8")
-        for anchor in ("Astra Low", "Luna / Medium", "Terra / High", "Sol is not a default lane",
-                       "`wait`", "scripts/task_state.py", "Cost/accounting is not part"):
+        for anchor in ("Astra Low", "Luna / Medium", "Terra / High", "Sol / Medium",
+                       "Sol / High", "Worker + Tester", "`wait`", "scripts/task_state.py",
+                       "Cost/accounting is not part"):
             if anchor not in text:
                 errors.append(f"skill missing policy anchor: {anchor}")
     return errors
