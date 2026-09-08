@@ -1,13 +1,26 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "cases": [
-    {"name":"economy mechanical", "input":{"task_class":"mechanical","mode":"economy"}, "expected":{"decision":"delegate","model":"gpt-5.6-luna","effort":"medium"}},
-    {"name":"economy bounded", "input":{"task_class":"bounded","mode":"economy"}, "expected":{"decision":"delegate","model":"gpt-5.6-luna","effort":"max"}},
-    {"name":"economy judgment", "input":{"task_class":"judgment","mode":"economy"}, "expected":{"decision":"parent"}},
-    {"name":"balanced bounded", "input":{"task_class":"bounded","mode":"balanced"}, "expected":{"decision":"delegate","model":"gpt-5.6-luna","effort":"max"}},
-    {"name":"balanced judgment", "input":{"task_class":"judgment","mode":"balanced","rationale":"module-level tradeoff"}, "expected":{"decision":"delegate","model":"gpt-5.6-terra","effort":"high"}},
-    {"name":"hard parent", "input":{"task_class":"difficult","mode":"balanced"}, "expected":{"decision":"parent"}},
-    {"name":"full capacity waits", "input":{"task_class":"bounded","mode":"economy","active_delegates":2}, "expected":{"decision":"wait"}},
-    {"name":"redundant skips", "input":{"task_class":"bounded","redundant":true}, "expected":{"decision":"skip"}}
+    {"name":"economy explorer","input":{"task_class":"mechanical","mode":"economy","roles":["explorer"]},"expected":{"decision":"delegate","model":"gpt-5.6-luna","effort":"medium"}},
+    {"name":"economy worker tester","input":{"task_class":"bounded","mode":"economy","roles":["worker","tester"]},"expected":{"decision":"delegate","model":"gpt-5.6-luna","effort":"max"}},
+    {"name":"economy judgment parent","input":{"task_class":"judgment","mode":"economy"},"expected":{"decision":"parent"}},
+    {"name":"economy difficult parent","input":{"task_class":"difficult","mode":"economy"},"expected":{"decision":"parent"}},
+    {"name":"economy Terra exception","input":{"task_class":"judgment","mode":"economy","economy_exception_reason":"Astra: decomposition overhead exceeds bounded handoff benefit"},"expected":{"decision":"delegate","model":"gpt-5.6-terra","effort":"high"}},
+    {"name":"economy Sol exception","input":{"task_class":"difficult","mode":"economy","economy_exception_reason":"Astra: decomposition overhead exceeds bounded handoff benefit"},"expected":{"decision":"delegate","model":"gpt-5.6-sol","effort":"medium"}},
+    {"name":"balanced bounded","input":{"task_class":"bounded","mode":"balanced","rationale":"bounded capability requirement"},"expected":{"decision":"delegate","model":"gpt-5.6-luna","effort":"max"}},
+    {"name":"balanced judgment","input":{"task_class":"judgment","mode":"balanced","rationale":"bounded capability requirement"},"expected":{"decision":"delegate","model":"gpt-5.6-terra","effort":"high"}},
+    {"name":"balanced difficult","input":{"task_class":"difficult","mode":"balanced","rationale":"bounded capability requirement"},"expected":{"decision":"delegate","model":"gpt-5.6-sol","effort":"medium"}},
+    {"name":"unbounded difficult parent","input":{"task_class":"difficult","delegable":false},"expected":{"decision":"parent"}},
+    {"name":"capacity waits","input":{"task_class":"bounded","mode":"economy","active_delegates":2},"expected":{"decision":"wait"}},
+    {"name":"redundant skips","input":{"task_class":"bounded","redundant":true},"expected":{"decision":"skip"}},
+    {"name":"serial explorer","input":{"task_class":"bounded","roles":["explorer"],"independent":false},"expected":{"decision":"delegate"}},
+    {"name":"economy low review","review":true,"input":{"risk":"low","mode":"economy"},"expected":{"decision":"delegate","model":"gpt-5.6-luna","effort":"max"}},
+    {"name":"balanced low review","review":true,"input":{"risk":"low","mode":"balanced"},"expected":{"decision":"delegate","model":"gpt-5.6-luna","effort":"max"}},
+    {"name":"economy normal review","review":true,"input":{"risk":"normal","mode":"economy"},"expected":{"decision":"delegate","model":"gpt-5.6-terra","effort":"high"}},
+    {"name":"balanced normal review","review":true,"input":{"risk":"normal","mode":"balanced"},"expected":{"decision":"delegate","model":"gpt-5.6-terra","effort":"high"}},
+    {"name":"economy high review","review":true,"input":{"risk":"high","mode":"economy"},"expected":{"decision":"delegate","model":"gpt-5.6-sol","effort":"high"}},
+    {"name":"balanced high review","review":true,"input":{"risk":"high","mode":"balanced"},"expected":{"decision":"delegate","model":"gpt-5.6-sol","effort":"high"}},
+    {"name":"economy exceptional review","review":true,"input":{"risk":"exceptional","mode":"economy","astra_risk_decision":"explicit scrutiny plan"},"expected":{"decision":"delegate","model":"gpt-6-astra","effort":"low"}},
+    {"name":"balanced exceptional review","review":true,"input":{"risk":"exceptional","mode":"balanced","astra_risk_decision":"explicit scrutiny plan"},"expected":{"decision":"delegate","model":"gpt-6-astra","effort":"low"}}
   ]
 }
