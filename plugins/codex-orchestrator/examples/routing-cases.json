@@ -1,101 +1,26 @@
 {
-  "schema_version": 1,
-  "illustrative": true,
+  "schema_version": 3,
   "cases": [
-    {
-      "name": "economy permits bounded work below its cap",
-      "input": {
-        "task_class": "bounded",
-        "mode": "economy",
-        "useful": true,
-        "independent": true,
-        "active_delegates": 1,
-        "controls_available": true,
-        "capabilities": {"gpt-5.6-luna": ["low", "max"]}
-      },
-      "expected": {
-        "decision": "delegate",
-        "model": "gpt-5.6-luna",
-        "effort": "max",
-        "max_concurrent_delegates": 2
-      }
-    },
-    {
-      "name": "economy holds work at its cap",
-      "input": {
-        "task_class": "bounded",
-        "mode": "economy",
-        "useful": true,
-        "independent": true,
-        "active_delegates": 2,
-        "controls_available": true,
-        "capabilities": {"gpt-5.6-luna": ["max"]}
-      },
-      "expected": {"decision": "parent", "max_concurrent_delegates": 2}
-    },
-    {
-      "name": "balanced permits work with two active delegates",
-      "input": {
-        "task_class": "bounded",
-        "mode": "balanced",
-        "useful": true,
-        "independent": true,
-        "active_delegates": 2,
-        "controls_available": true,
-        "capabilities": {"gpt-5.6-luna": ["max"]}
-      },
-      "expected": {"decision": "delegate", "max_concurrent_delegates": 3}
-    },
-    {
-      "name": "Luna selects the future ultra effort when explicitly supported",
-      "input": {
-        "task_class": "mechanical",
-        "useful": true,
-        "independent": true,
-        "controls_available": true,
-        "capabilities": {"gpt-5.6-luna": ["max", "ultra"]}
-      },
-      "expected": {"decision": "delegate", "effort": "ultra"}
-    },
-    {
-      "name": "missing selected model blocks without fallback",
-      "input": {
-        "task_class": "difficult",
-        "useful": true,
-        "independent": true,
-        "controls_available": true,
-        "capabilities": {"gpt-5.6-terra": ["high"]}
-      },
-      "expected": {"decision": "blocked"}
-    },
-    {
-      "name": "empty selected effort list blocks",
-      "input": {
-        "task_class": "bounded",
-        "useful": true,
-        "independent": true,
-        "controls_available": true,
-        "capabilities": {"gpt-5.6-luna": []}
-      },
-      "expected": {"decision": "blocked"}
-    },
-    {
-      "name": "capabilities are not assumed by default",
-      "input": {"task_class": "bounded", "useful": true, "independent": true, "controls_available": true},
-      "expected": {"decision": "blocked"}
-    },
-    {
-      "name": "evidence escalates the reassessed difficult task directly to Sol",
-      "input": {
-        "task_class": "difficult",
-        "useful": true,
-        "independent": true,
-        "controls_available": true,
-        "escalation": true,
-        "evidence": "A new primary source changes the required approach.",
-        "capabilities": {"gpt-5.6-sol": ["high"]}
-      },
-      "expected": {"decision": "delegate", "model": "gpt-5.6-sol", "effort": "high"}
-    }
+    {"name":"economy explorer","input":{"task_class":"mechanical","mode":"economy","roles":["explorer"]},"expected":{"decision":"delegate","model":"gpt-5.6-luna","effort":"medium"}},
+    {"name":"economy worker tester","input":{"task_class":"bounded","mode":"economy","roles":["worker","tester"]},"expected":{"decision":"delegate","model":"gpt-5.6-luna","effort":"max"}},
+    {"name":"economy judgment parent","input":{"task_class":"judgment","mode":"economy"},"expected":{"decision":"parent"}},
+    {"name":"economy difficult parent","input":{"task_class":"difficult","mode":"economy"},"expected":{"decision":"parent"}},
+    {"name":"economy Terra exception","input":{"task_class":"judgment","mode":"economy","economy_exception_reason":"Astra: decomposition overhead exceeds bounded handoff benefit"},"expected":{"decision":"delegate","model":"gpt-5.6-terra","effort":"high"}},
+    {"name":"economy Sol exception","input":{"task_class":"difficult","mode":"economy","economy_exception_reason":"Astra: decomposition overhead exceeds bounded handoff benefit"},"expected":{"decision":"delegate","model":"gpt-5.6-sol","effort":"medium"}},
+    {"name":"balanced bounded","input":{"task_class":"bounded","mode":"balanced","rationale":"bounded capability requirement"},"expected":{"decision":"delegate","model":"gpt-5.6-luna","effort":"max"}},
+    {"name":"balanced judgment","input":{"task_class":"judgment","mode":"balanced","rationale":"bounded capability requirement"},"expected":{"decision":"delegate","model":"gpt-5.6-terra","effort":"high"}},
+    {"name":"balanced difficult","input":{"task_class":"difficult","mode":"balanced","rationale":"bounded capability requirement"},"expected":{"decision":"delegate","model":"gpt-5.6-sol","effort":"medium"}},
+    {"name":"unbounded difficult parent","input":{"task_class":"difficult","delegable":false},"expected":{"decision":"parent"}},
+    {"name":"capacity waits","input":{"task_class":"bounded","mode":"economy","active_delegates":2},"expected":{"decision":"wait"}},
+    {"name":"redundant skips","input":{"task_class":"bounded","redundant":true},"expected":{"decision":"skip"}},
+    {"name":"serial explorer","input":{"task_class":"bounded","roles":["explorer"],"independent":false},"expected":{"decision":"delegate"}},
+    {"name":"economy low review","review":true,"input":{"risk":"low","mode":"economy"},"expected":{"decision":"delegate","model":"gpt-5.6-luna","effort":"max"}},
+    {"name":"balanced low review","review":true,"input":{"risk":"low","mode":"balanced"},"expected":{"decision":"delegate","model":"gpt-5.6-luna","effort":"max"}},
+    {"name":"economy normal review","review":true,"input":{"risk":"normal","mode":"economy"},"expected":{"decision":"delegate","model":"gpt-5.6-terra","effort":"high"}},
+    {"name":"balanced normal review","review":true,"input":{"risk":"normal","mode":"balanced"},"expected":{"decision":"delegate","model":"gpt-5.6-terra","effort":"high"}},
+    {"name":"economy high review","review":true,"input":{"risk":"high","mode":"economy"},"expected":{"decision":"delegate","model":"gpt-5.6-sol","effort":"high"}},
+    {"name":"balanced high review","review":true,"input":{"risk":"high","mode":"balanced"},"expected":{"decision":"delegate","model":"gpt-5.6-sol","effort":"high"}},
+    {"name":"economy exceptional review","review":true,"input":{"risk":"exceptional","mode":"economy","astra_risk_decision":"explicit scrutiny plan"},"expected":{"decision":"delegate","model":"gpt-6-astra","effort":"low"}},
+    {"name":"balanced exceptional review","review":true,"input":{"risk":"exceptional","mode":"balanced","astra_risk_decision":"explicit scrutiny plan"},"expected":{"decision":"delegate","model":"gpt-6-astra","effort":"low"}}
   ]
 }

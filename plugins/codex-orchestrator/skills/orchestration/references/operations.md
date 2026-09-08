@@ -1,266 +1,51 @@
-# codex-orchestrator operations
+# Operations
 
-This reference holds the operational details behind the short orchestration skill.
-It preserves the upstream native delegation, evidence, and accounting lifecycle.
-Read the [routing policy](routing-policy.md) for modes, capability lanes, bounded
-contracts, and risk-based review. There are no installed role files or companion installer.
+Read this when live dispatch/review details are needed. [Routing policy](routing-policy.md) owns model/role/risk selection.
 
-## Parent session
+## Parent and preflight
 
-The primary session is GPT-6 Astra at whatever supported effort the user selected.
-The invocation is authoritative. Do not require a particular effort, rewrite the
-parent configuration, or claim a model/effort pin without runtime evidence. If the
-session exposes model and effort metadata and the model is not `gpt-6-astra`, report
-that mismatch as a selection prerequisite and do not claim Astra orchestration. If
-metadata does not expose the model or effort, report the value as unobservable and
-continue within the user's request without inventing confirmation.
+GPT-6 Astra must be the primary session for an Astra-orchestrated claim. Preserve the user's parent effort; Low is a recommendation, not an automatic change. Record observable parent settings; disclose unobservable values rather than inventing evidence.
 
-After capability preflight and before the first implementation or delegation task
-call, record the selected plan:
+Before dispatch inspect the current native schema. Require explicit model, supported effort and fresh-context controls and record the source. Use the exposed generic native spawn interface with explicit settings (`fork_turns: none` when that is the public field). Do not install role TOMLs that could pin a role to another model. The logical `roles` field belongs to our contract/ledger, not an invented native tool parameter.
 
-~~~text
-CODEX ORCHESTRATOR ROUTE
-parent: <observed model or unobservable> / <observed effort or unobservable>
-mode: <economy or balanced; balanced by default>
-delegation: <none or each selected model and effort>
-risk: <concise, task-specific rationale>
-~~~
+Luna's maximum individual effort excludes a setting such as Ultra when it enables autonomous descendants. Missing/conflicting controls block the affected route; no silent model/effort substitution or separate inference mechanism workaround.
 
-The declaration is a record of the current decision, not a fixed set of workflow
-lanes. Update it only when new evidence changes the plan, and explain that evidence.
+Execution defaults: Economy Luna Medium mechanical, Luna maximum-individual bounded, Terra High/Sol Medium only with explicit Astra exception reasons. Balanced Luna maximum-individual, Terra High judgment, Sol Medium difficult bounded. Unbounded decisions stay with Astra; an additional Astra specialist must justify its separate context.
 
-## Dynamic native delegation
+## Roles and lifecycle
 
-Use the generic `collaboration.spawn_agent` only if the current environment exposes
-that tool and its schema. Select a model and effort for each concrete, bounded,
-independent deliverable from the task's risk, context, and available work. Pass the
-chosen values explicitly:
+Explorer/Researcher collect read-only evidence when needed. Astra uses it to decide architecture and contracts. Worker implements; Tester reproduces, validates and may write authorized regression tests. Worker + Tester can share one bounded dispatch. Neither role replaces Astra verification or a fresh Reviewer.
 
-~~~text
-model: <selected supported model>
-reasoning_effort: <selected supported effort>
-fork_turns: none
-~~~
+Keep user-visible progress compact: one plan and meaningful changes unless detailed orchestration is requested. Retain task IDs, roles, ownership, dependencies, selected model/effort, control sources, observed settings and result evidence in the declared state. No polling narration or mandatory role sequence.
 
-Include a task name and a message that states the bounded ownership and expected
-return. For example, this is one illustrative request shape; the model and effort
-must be selected afresh for the actual task:
+`wait` preserves future delegation pending readiness/capacity/serialization; `skip` avoids work. Respect economy 2 / balanced 3 active delegates and lower host limits, including reviewers/descendants. Partition writers by non-overlapping files/directories. Prefer complete verifiable deliverables over micro-delegation.
 
-~~~json
-{
-  "task_name": "inspect_auth_boundary",
-  "message": "Inspect the auth boundary in the owned files. Return findings, exact file references, and the checks you ran; do not edit outside that boundary.",
-  "model": "gpt-5.6-luna",
-  "reasoning_effort": "max",
-  "fork_turns": "none"
-}
-~~~
+## Candidate verification before review
 
-The example illustrates request syntax. Select capability using the routing policy;
-Luna must request its live-supported maximum effort, and mode concurrency limits apply.
-Use the current tool schema for any additional required fields and reject a request
-whose selected controls cannot be enforced.
+After execution, Astra integrates changes, identifies the accumulated revision (including dirty work), inspects the diff and checks relevant evidence/acceptance criteria. Run or confirm highest-value tests; returned Tester evidence can be reused when trustworthy, but never treat the tester's assertion as final acceptance.
 
-Do not rely on role names or predefined TOMLs that can override explicit controls.
-Respect the economy cap of 2 or balanced cap of 3 active delegates and any lower host
-limit. Count reviewers and descendants; capacity alone never justifies dispatch.
-Dispatch only work whose files, interfaces, and acceptance evidence are clear;
-keep useful planning, implementation, integration, or verification work in the
-parent session while independent subagents run. Avoid assigning the same change or
-check to both parent and subagent. Preserve concurrent edits and return each
-subagent's actual result and evidence to the parent.
+Only THEN dispatch a fresh Reviewer. Freeze the candidate while it is reviewed; do not leave writers modifying it. Provide exact revision, contracts, parent verification evidence, checks and residual risks. Capture `parent_verified_revision` and `parent_verification_evidence` in the review record before dispatch, matching `reviewed_revision`.
 
-The following is the known capability snapshot for routing. It is guidance for a
-selection, not a contract that overrides live tool metadata:
+Reviewer defaults are mode-independent: trivial may omit with reason; low Luna maximum-individual; normal Terra High; high Sol High; exceptional Astra Low after an explicit parent decision. Additional/stronger scrutiny needs an explicit reason. Do not use an Economy exception gate for normal/high reviews. A stronger review override cannot lower the risk/effort floor.
 
-| Model | Efforts known in the current snapshot |
-| --- | --- |
-| `gpt-5.6-sol` | `low`, `medium`, `high`, `xhigh`, `max`, `ultra` |
-| `gpt-5.6-terra` | `low`, `medium`, `high`, `xhigh`, `max`, `ultra` |
-| `gpt-5.6-luna` | `low`, `medium`, `high`, `xhigh`, `max` |
+Reviewers are read-only, fresh contexts, not the parent or any earlier executor (including a read-only Tester). Do not claim enforced sandbox isolation without observed permission evidence. Return `ship`, `fix-first` or `rethink`; never implement your own findings.
 
-Inspect the current tool metadata when selecting and invoking a subagent. A changed
-live capability list wins over this snapshot. If the selected model, effort, explicit
-spawn control, or required tool is unavailable, conflicting, or unobservable, fail
-the affected delegation closed. Continue safe parent work when possible and report
-the limitation; never silently substitute another model, effort, or tool.
+## Corrections and final acceptance
 
-## Evidence and review
+Every edit invalidates verification/review for acceptance. Route `fix-first` corrections according to the evidence; reuse a capable Worker where sensible. Astra re-verifies the new candidate, then dispatches a NEW fresh Reviewer. `rethink` requires replanning. Keep prior review evidence tied to its old revision, not silently updated.
 
-The public spawn and thread metadata are authoritative for model and effort. Use
-runtime introspection only to resolve a field that public metadata omitted, and report
-the source of each value. Chosen values are not the same as runtime-confirmed values.
-Before dispatch, confirm explicit model, effort, and clean-context controls in the
-public schema; check the selected model and supported effort, including Luna's maximum.
-After dispatch, inspect realized settings and their evidence source. Stop affected
-work on mismatch and withhold acceptance until the discrepancy is resolved and the
-result reverified. Unobservable realized settings must remain unconfirmed; if the
-task requires proof of the realized route, fail that guarantee closed. Do not
-reinterpret an accepted spawn request as runtime confirmation.
+After `ship`, Astra confirms the same accumulated revision remains unchanged, required work and material findings are resolved, checks are sufficient and residual risks are recorded. Then accept; do not rerun everything solely because acceptance is a separate stage. Any subsequent integration edit restarts verification/review.
 
-Before acceptance, the parent first inspects the complete accumulated
-diff and runs appropriate requested checks. Trivial work may omit fresh review when
-that verification is sufficient. Otherwise use a new read-only reviewer context:
-low risk Luna / Max, normal risk Terra / High, high risk Sol / High, and an explicit
-Astra decision for exceptional risk. The reviewer must receive the exact change set,
-interfaces, constraints, and verification evidence. Ask it to return:
+Use `scripts/task_state.py INPUT.json --acceptance` for optional assertion consistency checks. Logical `roles` may combine Worker + Tester; `kind` identifies the lifecycle record. `research` and `validation` are execution kinds, not synonyms for review. The validator does not intercept Codex or prove runtime settings/chronology.
 
-~~~text
-CODEX ORCHESTRATOR REVIEW
-VERDICT: ship | fix-first | rethink
-REASON: <evidence-based reason>
-FINDINGS: <precise findings or none>
-RESIDUAL RISK: <remaining risk or none>
-~~~
+Set pre-dispatch budgets for dispatches, corrections and reviews. An overrun means reassess and explicitly revise the plan or report a blocker, never waive correctness.
 
-When fresh review is required, `ship` is the only accepting review verdict.
-Astra always retains final acceptance authority; inability to run a required review
-must be reported as incomplete verification. On
-`fix-first`, Astra classifies the findings and assigns the correction according to
-the [correction routing policy](routing-policy.md#correction-routing): current
-implementer for bounded fixes, another capable model for an evidenced capability
-gap, or Astra for architectural work or minimal fixes where handoff is inefficient.
-After the assigned owner corrects the change, Astra reruns verification and obtains
-a new fresh review. Repeated material findings require reassessment before another
-attempt. On `rethink`, revise the plan before claiming completion. The reviewer
-must not edit files or implement its own fixes. Capture actual sandbox and permission
-metadata when the host exposes them; do not claim enforced read-only isolation unless
-it was observed.
+## Runtime evidence and host boundaries
 
-## ChatGPT app and cloud boundaries
+Requested settings are not proof of realized settings. On observed mismatch stop affected work and reverify. Unobservable settings remain disclosed/unconfirmed and block only guarantees explicitly requiring routing proof. Record client/version during release smoke checks; cross-platform Python support does not imply every host exposes model-pinned subagents. Use only controls exposed by the current native interface. Separate app/cloud tasks require the user's explicit request.
 
-Native Codex subagents in the ChatGPT app are usable when the exposed tool schema
-provides the needed controls. Separate app tasks require an explicit user request.
-For an explicit Codex app project task, `mcp__codex_app__create_thread` supports
-`model` and `thinking`; call `mcp__codex_app__list_projects` first, use a worktree by
-default when the selected project is a Git repository, and use local otherwise.
-Follow any explicit starting-state request exactly.
+## Accounting boundary
 
-ChatGPT Work cloud `create_thread` does not accept `model` or `thinking`; omit both.
-Cloud work therefore cannot currently promise arbitrary model or effort control. Do
-not dispatch an incompatible model-pinned request there by default, and do not use an
-API key, nested CLI, or fabricated tool as a workaround. A future native work tool is
-usable only once its schema exposes the required controls.
+Accounting remains outside the installed plugin. Normal tasks do not load pricing/token instructions or emit API-equivalent receipts. Repository-root `tools/accounting/` preserves the historical upstream utility for manual/reference use, not ChatGPT Pro/Codex quota measurement.
 
-## Reporting
-
-For each delegation and review, report the selected model/effort, the evidence source,
-the bounded deliverable, and the actual result. Keep chosen-but-unconfirmed values
-separate from runtime-confirmed values. A parent acceptance claim requires its own
-diff inspection and requested checks; a subagent's assertion alone is insufficient.
-
-## Automatic lifecycle updates
-
-Emit these updates in the user's conversation, not only in an internal log. They
-apply to each implementer and each fresh reviewer, including failed dispatches:
-
-~~~text
-CODEX ORCHESTRATOR DELEGATE <name>
-task: <bounded deliverable and owned files>
-requested: <model> / <effort>
-mode: <economy or balanced>
-reason: <why delegation helps and this is the cheapest capable selection>
-
-CODEX ORCHESTRATOR RESULT <name> / <agent ID or unavailable>
-status: <completed, failed, interrupted, or blocked; actual evidence>
-requested: <model> / <effort>
-observed: <model or unobservable> / <effort or unobservable>
-evidence: <runtime metadata source or unavailable>
-~~~
-
-Do not equate a successful dispatch with completed work. Keep a record of agent IDs,
-requested settings, runtime observations, result evidence, and any usage source.
-Native metadata may expose neither realized settings nor billing-grade usage; say so.
-No API keys, external inference CLIs, billing-account queries, or dashboard are needed.
-
-## API-equivalent receipt policy
-
-Receipts are conditional: show one at completion only when verified token usage is
-available for a clearly identified scope or the user explicitly requests a receipt.
-Without either condition, silently omit accounting output and skip the calculator.
-Do not search for telemetry, query account usage, or request setup solely to produce
-a receipt. Retain usage already exposed by native tools; partial data must retain
-its observed scope. An explicit request without observed usage gets a concise
-unavailable explanation, not a fabricated estimate. The calculator remains available
-as an optional tool and uses Python standard library only:
-[calculator](../../../scripts/cost_receipt.py),
-[pricing snapshot](../../../pricing/2026-09-04.json).
-Resolve these paths relative to this installed reference, not a guessed cache version.
-
-Use only non-overlapping observed usage with an explicit source. Cumulative telemetry
-snapshots are not additive calls. Never sum a parent-inclusive aggregate with child
-totals. Do not turn message lengths into claimed observed usage. Missing usage or
-rates must remain unavailable, and partial coverage must state which work is missing.
-Whole-task coverage requires every parent and subagent call, including failed attempts,
-review, corrections, and final parent work. If the final response's tokens cannot yet
-be observed, identify the receipt's cutoff and do not claim whole-task completeness.
-
-Cached input is a subset of total input. Output already contains reasoning tokens;
-never add them a second time. Explicit per-call standard short-context eligibility
-is required; unknown or unsupported long-context, service-tier, or cache-write pricing
-must not silently inherit standard rates. Effort is recorded without a rate multiplier.
-
-The snapshot records USD per million tokens and official source URLs, with a
-2026-09-04 verification date supplied by the recording coordinator. It is a historical
-snapshot, not a live-price guarantee; Sol rates are promotional. Disclose the snapshot
-date and freshness when showing an estimate. Use a newly verified versioned snapshot
-if current prices are required. Do not silently change historical receipts.
-
-~~~text
-API-EQUIVALENT COST RECEIPT
-usage: <observed source and cutoff, partial, or unavailable with reason>
-scope: <whole task only if complete; delegated-only or observed subset otherwise>
-pricing: <snapshot date; historical USD estimate; Sol promotional if applicable>
-routed: <USD estimate or unavailable>
-same-token Astra repricing: <USD or unavailable>
-same-token API price difference: <USD and percentage where valid, or unavailable>
-limits: This is not a measured all-Astra counterfactual, actual net task savings,
-        or a change in ChatGPT subscription charges or usage credits.
-~~~
-
-In an emitted receipt, when no subagents ran, state `no delegation savings`.
-When a receipt was requested but no usage is exposed, state
-`unavailable: native tools did not expose observed token usage`; never show
-zero cost. Keep any illustrative fixture result visibly separate from live usage.
-
-## Calculator input and execution
-
-Run `python cost_receipt.py INPUT.json [--pricing PATH]` using the installed
-calculator path above (Python 3.11+; use your platform's Python launcher). It emits a JSON receipt; exit 0 includes calculated, partial,
-and unavailable outcomes, while invalid input or pricing exits 2. Inspect the
-receipt status instead of treating exit 0 as proof of complete usage.
-
-The version 1 input contains:
-
-- `schema_version: 1`, `task_id`, and `coverage` with `scope` (`whole_task` or
-  `delegated_only`), `agent_roster_complete`, and `final_parent_usage_cutoff` booleans.
-- `agents`: unique `agent_id`, `role` (`parent`, `delegate`, or `reviewer`), and
-  `calls_complete`. Declare missing agents rather than omitting them to improve coverage.
-- `calls`: globally unique `call_id`, declared `agent_id`, `model`, optional `effort`,
-  and `aggregation: "atomic"`. Supply `usage.kind`, a non-empty `usage.source`, and
-  `input_tokens`, `cached_input_tokens`, and `output_tokens` when known. Optional
-  `reasoning_tokens` is already included in output. Missing values stay unknown.
-- Each call also declares `context: "standard"` and `service_tier: "standard"`, with
-  `context_source` and `service_tier_source` set to `observed` or `assumed`. If runtime
-  tier metadata is null, a clearly disclosed standard-price scenario is permitted;
-  never relabel that assumption as observed billing. Known nonstandard regimes
-  are unsupported. Do not assume a workload eligible when evidence contradicts it.
-
-See the [illustrative input](../../../examples/illustrative-usage.json) for an
-executable fixture, distinct from observed task usage. Receipts preserve assumptions,
-usage provenance, and per-agent coverage. Delegated-only scope includes reviewers;
-whole-task scope needs an authoritative complete roster, complete calls for each
-agent, a parent, and final parent usage. Solo work does not require an invented
-reviewer. False completeness flags keep the result partial or unavailable.
-
-For cumulative native telemetry, retain each snapshot as source evidence, skip exact
-repeats, and derive atomic records only when the cumulative delta matches the
-reported last-call usage for every token field. If events are missing, counters reset,
-or aggregate ownership is unclear, mark that coverage unavailable rather than
-inventing calls. Keep preparation-turn usage separate from the implementation turn
-when that is the declared task scope.
-
-The bundled calculator conservatively caps each call at 128,000 input tokens. This
-is an implementation support boundary, not an official model pricing threshold.
-Missing cache counts remain unknown; provide an explicit zero only when supported
-by the usage source. Unknown usage fields are rejected to avoid ignoring cache writes.
+See optional [evaluation](evaluation.md) for comparisons using already-available telemetry. Unknown usage remains unknown, never zero.

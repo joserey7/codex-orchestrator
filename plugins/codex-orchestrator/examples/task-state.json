@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "illustrative": true,
+  "mode": "balanced",
+  "risk": "normal",
+  "revision": "worktree:abc",
+  "parent": {
+    "agent_id": "parent",
+    "requested_model": "gpt-6-astra",
+    "requested_effort": "low",
+    "routing_proof_required": false,
+    "unconfirmed_disclosure": "runtime model/effort unobservable",
+    "diff_inspected_revision": "worktree:abc",
+    "verified_revision": "worktree:abc",
+    "accepted_revision": "worktree:abc",
+    "verification_evidence": "Illustrative: Astra inspected the accumulated diff and checked Tester evidence before review",
+    "acceptance_reason": "Illustrative: same verified revision received ship and requirements are satisfied"
+  },
+  "work": [
+    {
+      "id": "impl",
+      "kind": "implementation",
+      "roles": ["worker", "tester"],
+      "status": "completed",
+      "required": true,
+      "read_only": false,
+      "fresh_context": false,
+      "ownership": ["src/impl"],
+      "depends_on": [],
+      "agent_id": "agent-impl",
+      "requested_model": "gpt-5.6-luna",
+      "requested_effort": "max",
+      "dispatch_source": "native spawn metadata",
+      "routing_proof_required": false,
+      "unconfirmed_disclosure": "realized settings unobservable",
+      "evidence": "Illustrative: bounded implementation and targeted regression checks passed"
+    },
+    {
+      "id": "review",
+      "kind": "review",
+      "roles": ["reviewer"],
+      "status": "completed",
+      "required": true,
+      "read_only": true,
+      "fresh_context": true,
+      "ownership": ["src"],
+      "depends_on": ["impl"],
+      "agent_id": "agent-review",
+      "requested_model": "gpt-5.6-terra",
+      "requested_effort": "high",
+      "dispatch_source": "native spawn metadata",
+      "routing_proof_required": false,
+      "unconfirmed_disclosure": "realized settings unobservable",
+      "parent_verified_revision": "worktree:abc",
+      "parent_verification_evidence": "Illustrative: Astra inspected diff and checked Tester evidence before dispatching review",
+      "reviewed_revision": "worktree:abc",
+      "verdict": "ship",
+      "evidence": "Illustrative: independent review of the accumulated verified diff"
+    }
+  ],
+  "budget": {"dispatches": 4, "corrections": 2, "reviews": 2},
+  "parent_corrections": 0
+}
