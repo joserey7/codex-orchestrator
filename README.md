@@ -8,6 +8,10 @@ codex-orchestrator is a public MIT-licensed Codex plugin evolved from Astra Advi
 
 Models describe capability; roles describe responsibility. Select directly, not through a failure ladder.
 
+### Simplified topology
+
+Use this view for the fast mental model:
+
 ```text
                          GPT-6 ASTRA (parent)
             Intent / Architecture / Contracts / Coordination
@@ -27,6 +31,66 @@ Models describe capability; roles describe responsibility. Select directly, not 
 ```
 
 The branches are choices, not mandatory agents or an escalation sequence. Astra retains architectural authority even when a specialist implements a difficult change.
+
+### Detailed execution topology
+
+Use this view to understand how logical roles fit inside the same model topology:
+
+```text
+                              GPT-6 ASTRA
+                         Goal / Architecture
+                Intent / Contracts / Coordination
+                                  |
+                                  v
+                              PLAN WORK
+                                  |
+                 +----------------+----------------+
+                 |                                 |
+                 v                                 v
+             EXPLORER                         RESEARCHER
+        repository discovery             external/version evidence
+                 |                                 |
+                 +----------------+----------------+
+                                  |
+                                  v
+                              GPT-6 ASTRA
+                    Resolve decisions / contracts
+                                  |
+                                  v
+                                WORKER
+                          Implement bounded change
+                                  |
+                    +-------------+-------------+
+                    |             |             |
+                    v             v             v
+                Luna Max      Terra High    Sol Medium
+                 bounded       judgment      difficult
+                                             bounded
+                    +-------------+-------------+
+                                  |
+                                  v
+                                TESTER
+                   Reproduce / validate / regression
+                                  |
+                                  v
+                     ASTRA INTEGRATION + VERIFICATION
+                                  |
+                                  v
+                     FRESH REVIEW (selected by risk)
+                                  |
+             +--------------------+--------------------+
+             |                    |                    |
+             v                    v                    v
+         Luna Max             Terra High            Sol High
+           Low                  Normal                High
+                                                       |
+                                      Exceptional -> Astra Low
+                                                       |
+                                                       v
+                                          ASTRA FINAL ACCEPTANCE
+```
+
+Explorer and Researcher are optional discovery roles. Worker and Tester may be separate or combined as **Worker + Tester** for a small explicit task. The role does not pin the model: capability selects the execution model, while consequence-of-error selects the fresh reviewer.
 
 ### Execution modes
 
